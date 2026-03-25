@@ -4,6 +4,171 @@
 
 {% block content %}
 <section class="settings-shell">
+    <header class="settings-section-header settings-section-header-primary">
+        <p class="settings-section-kicker">Automation Center</p>
+        <h1>自动补邀</h1>
+        <p class="settings-section-lead">把补邀规则、执行频率、并发处理和最近一次结果集中放在页面最上方，方便你直接管控补邀节奏。</p>
+    </header>
+
+    <div class="settings-primary-grid">
+        <form id="autoReinviteForm" class="settings-form-grid">
+            <article class="settings-card">
+                <div class="settings-card-header">
+                    <div>
+                        <h3>自动补邀规则</h3>
+                        <p>当质保子号所在 Team 已封禁时，系统会按规则尝试重新补邀，避免仍在有效 Team 的账号被重复处理。</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="autoReinviteEnabled" name="auto_reinvite_enabled"
+                            {% if auto_reinvite_enabled == 'true' %}checked{% endif %}>
+                        <span>启用自动补邀</span>
+                    </label>
+                    <p class="form-help">开启后只会处理符合规则的质保子号，不会把母号邮箱或仍在正常 Team 中的账号重复补邀。</p>
+                </div>
+
+                <div class="settings-form-split">
+                    <div class="form-group">
+                        <label for="autoReinviteStartTime">扫描开始时间</label>
+                        <input type="time" id="autoReinviteStartTime" name="auto_reinvite_start_time"
+                            value="{{ auto_reinvite_start_time or '00:00' }}" class="form-control">
+                        <p class="form-help">首轮从这个时间点开始，之后按扫描周期循环执行。</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="autoReinviteIntervalMinutes">扫描周期（分钟）</label>
+                        <input type="number" id="autoReinviteIntervalMinutes" name="auto_reinvite_interval_minutes"
+                            value="{{ auto_reinvite_interval_minutes or '5' }}" min="1" max="1440" class="form-control">
+                        <p class="form-help">支持 1-1440 分钟，适合按固定节奏补邀。</p>
+                    </div>
+                </div>
+
+                <div class="settings-form-split">
+                    <div class="form-group">
+                        <label for="autoReinviteBatchSize">单轮处理账号数</label>
+                        <input type="number" id="autoReinviteBatchSize" name="auto_reinvite_batch_size"
+                            value="{{ auto_reinvite_batch_size or '20' }}" min="1" max="500" class="form-control">
+                        <p class="form-help">限制每轮最多处理多少个账号，避免一次性扫完整库导致请求过大。</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="autoReinviteConcurrency">自动补邀并发数</label>
+                        <input type="number" id="autoReinviteConcurrency" name="auto_reinvite_concurrency"
+                            value="{{ auto_reinvite_concurrency or '1' }}" min="1" max="20" class="form-control">
+                        <p class="form-help">控制同一时间并发处理多少个账号；数值越高，处理越快，但请求压力也更大。</p>
+                    </div>
+                </div>
+
+                <div class="settings-note">
+                    <span class="settings-note-label">执行规则</span>
+                    <ul class="settings-list settings-rule-list">
+                        <li>只处理拥有质保兑换码的子号邮箱。</li>
+                        <li>只看该邮箱最新一条兑换记录，避免旧记录反复补邀。</li>
+                        <li>最新记录对应的 Team 必须已封禁；正常、已满或仅异常状态不会触发。</li>
+                        <li>如果该邮箱已经在新的正常 Team 中，系统会自动跳过。</li>
+                        <li>母号邮箱和来源母号邮箱会自动跳过，不参与补邀。</li>
+                        <li>每个时间槽只执行一次，超出单轮处理上限的账号会顺延到下一轮。</li>
+                    </ul>
+                </div>
+
+                <div class="settings-note">
+                    <span class="settings-note-label">质保起算</span>
+                    <p>质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。</p>
+                </div>
+
+                <div class="settings-actions settings-actions-inline">
+                    <button type="submit" class="btn btn-primary">保存补邀规则</button>
+                    <button type="button" class="btn btn-secondary settings-run-button" id="runAutoReinviteNow">立即执行一次补邀</button>
+                </div>
+            </article>
+        </form>
+
+        <article class="settings-card settings-result-card" id="autoReinviteResultCard">
+            <div class="settings-card-header">
+                <div>
+                    <h3>最近一次执行结果</h3>
+                    <p>展示最近一次手动执行、定时扫描或封号触发的补邀结果。</p>
+                </div>
+                <span class="settings-status-pill{% if not auto_reinvite_last_result %} is-hidden{% endif %}" id="autoReinviteStatusPill">{% if auto_reinvite_last_result %}{{ auto_reinvite_last_result.trigger_source_label }}{% endif %}</span>
+            </div>
+
+            <div id="autoReinviteResultContent">
+                {% if auto_reinvite_last_result %}
+                <div class="settings-result-meta">
+                    <span>执行时间：{{ auto_reinvite_last_result.executed_at_display or auto_reinvite_last_result.executed_at }}</span>
+                    <span>触发方式：{{ auto_reinvite_last_result.trigger_source_label }}</span>
+                </div>
+
+                <div class="settings-result-stats">
+                    <div class="settings-stat-tile">
+                        <strong>{{ auto_reinvite_last_result.processed or 0 }}</strong>
+                        <span>本轮处理</span>
+                    </div>
+                    <div class="settings-stat-tile">
+                        <strong>{{ auto_reinvite_last_result.reinvited or 0 }}</strong>
+                        <span>成功补邀</span>
+                    </div>
+                    <div class="settings-stat-tile">
+                        <strong>{{ auto_reinvite_last_result.skipped or 0 }}</strong>
+                        <span>自动跳过</span>
+                    </div>
+                    <div class="settings-stat-tile">
+                        <strong>{{ auto_reinvite_last_result.failed or 0 }}</strong>
+                        <span>执行失败</span>
+                    </div>
+                    <div class="settings-stat-tile">
+                        <strong>{{ auto_reinvite_last_result.remaining_candidates or 0 }}</strong>
+                        <span>顺延下轮</span>
+                    </div>
+                    <div class="settings-stat-tile">
+                        <strong>{{ auto_reinvite_last_result.concurrency or 0 }}</strong>
+                        <span>并发设置</span>
+                    </div>
+                </div>
+
+                <div class="settings-note settings-note-compact">
+                    <span class="settings-note-label">结果摘要</span>
+                    <p>{{ auto_reinvite_last_result.message or '最近一次执行已完成。' }}</p>
+                </div>
+
+                {% if auto_reinvite_last_result.details %}
+                <div class="settings-result-list">
+                    {% for item in auto_reinvite_last_result.details %}
+                    <div class="settings-result-item">
+                        <div>
+                            <strong>{{ item.email or '未知邮箱' }}</strong>
+                            <span>{{ item.code or '-' }}</span>
+                        </div>
+                        <div class="settings-result-item-meta">
+                            <em>{{ item.status or 'unknown' }}</em>
+                            {% if item.reason %}
+                            <small>{{ item.reason }}</small>
+                            {% elif item.team_id %}
+                            <small>已补邀到 Team #{{ item.team_id }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="settings-empty-state">
+                    <strong>还没有执行记录</strong>
+                    <p>你可以先保存补邀规则，或直接点“立即执行一次补邀”查看当前候选与处理结果。</p>
+                </div>
+                {% endif %}
+            </div>
+        </article>
+    </div>
+
+    <header class="settings-section-header">
+        <p class="settings-section-kicker">Control Center</p>
+        <h2>系统设置</h2>
+        <p class="settings-section-lead">代理、密码、日志、Webhook、售后支持、默认席位和 Team 自动刷新继续集中放在这里。</p>
+    </header>
+
     <div class="settings-topbar">
         <span class="settings-topbar-label">独立保存</span>
         <p>当前页所有模块均为单独保存；修改售后、默认席位或自动补邀时不会互相覆盖。</p>
@@ -27,9 +192,6 @@
         </button>
         <button type="button" class="settings-tab" data-panel="panel-team-default" role="tab" aria-selected="false">
             默认席位
-        </button>
-        <button type="button" class="settings-tab" data-panel="panel-auto-reinvite" role="tab" aria-selected="false">
-            自动补邀
         </button>
         <button type="button" class="settings-tab" data-panel="panel-team-refresh" role="tab" aria-selected="false">
             Team 自动刷新
@@ -257,81 +419,6 @@
             </form>
         </section>
 
-        <section id="panel-auto-reinvite" class="settings-panel" role="tabpanel" hidden>
-            <form id="autoReinviteForm" class="settings-form-grid">
-                <article class="settings-card">
-                    <div class="settings-card-header">
-                        <div>
-                            <h3>自动补邀</h3>
-                            <p>当质保子号所在 Team 已封禁时，系统会按规则尝试重新补邀，避免仍在有效 Team 的账号被重复处理。</p>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="autoReinviteEnabled" name="auto_reinvite_enabled"
-                                {% if auto_reinvite_enabled == 'true' %}checked{% endif %}>
-                            <span>启用自动补邀</span>
-                        </label>
-                        <p class="form-help">开启后只会处理符合规则的质保子号，不会把母号邮箱或仍在正常 Team 中的账号重复补邀。</p>
-                    </div>
-
-                    <div class="settings-form-split">
-                        <div class="form-group">
-                            <label for="autoReinviteStartTime">扫描开始时间</label>
-                            <input type="time" id="autoReinviteStartTime" name="auto_reinvite_start_time"
-                                value="{{ auto_reinvite_start_time or '00:00' }}" class="form-control">
-                            <p class="form-help">首轮从这个时间点开始，之后按扫描周期循环执行。</p>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="autoReinviteIntervalMinutes">扫描周期（分钟）</label>
-                            <input type="number" id="autoReinviteIntervalMinutes" name="auto_reinvite_interval_minutes"
-                                value="{{ auto_reinvite_interval_minutes or '5' }}" min="1" max="1440" class="form-control">
-                            <p class="form-help">支持 1-1440 分钟，适合按固定节奏补邀。</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-form-split">
-                        <div class="form-group">
-                            <label for="autoReinviteBatchSize">单轮处理账号数</label>
-                            <input type="number" id="autoReinviteBatchSize" name="auto_reinvite_batch_size"
-                                value="{{ auto_reinvite_batch_size or '20' }}" min="1" max="500" class="form-control">
-                            <p class="form-help">限制每轮最多处理多少个账号，避免一次性扫完整库导致请求过大。</p>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="autoReinviteConcurrency">自动补邀并发数</label>
-                            <input type="number" id="autoReinviteConcurrency" name="auto_reinvite_concurrency"
-                                value="{{ auto_reinvite_concurrency or '1' }}" min="1" max="20" class="form-control">
-                            <p class="form-help">控制同一时间并发处理多少个账号；数值越高，处理越快，但请求压力也更大。</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-note">
-                        <span class="settings-note-label">执行规则</span>
-                        <ul class="settings-list settings-rule-list">
-                            <li>只处理拥有质保兑换码的子号邮箱。</li>
-                            <li>只看该邮箱最新一条兑换记录，避免旧记录反复补邀。</li>
-                            <li>最新记录对应的 Team 必须已封禁；正常、已满或仅异常状态不会触发。</li>
-                            <li>如果该邮箱已经在新的正常 Team 中，系统会自动跳过。</li>
-                            <li>母号邮箱和来源母号邮箱会自动跳过，不参与补邀。</li>
-                            <li>每个时间槽只执行一次，超出单轮处理上限的账号会顺延到下一轮。</li>
-                        </ul>
-                    </div>
-
-                    <div class="settings-note">
-                        <span class="settings-note-label">质保起算</span>
-                        <p>质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。</p>
-                    </div>
-
-                    <div class="settings-actions">
-                        <button type="submit" class="btn btn-primary">保存补邀规则</button>
-                    </div>
-                </article>
-            </form>
-        </section>
-
         <section id="panel-team-refresh" class="settings-panel" role="tabpanel" hidden>
             <form id="teamRefreshForm" class="settings-form-grid">
                 <article class="settings-card">
@@ -408,6 +495,54 @@
         --settings-muted: #7077a8;
         --settings-surface: #ffffff;
         --settings-shadow: 0 18px 36px rgba(91, 101, 203, 0.08);
+    }
+
+    .settings-section-header {
+        display: grid;
+        gap: 6px;
+    }
+
+    .settings-section-header-primary {
+        margin-top: 4px;
+    }
+
+    .settings-section-kicker {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #8f97c8;
+    }
+
+    .settings-section-header h1,
+    .settings-section-header h2 {
+        margin: 0;
+        color: var(--settings-accent);
+        line-height: 1.08;
+    }
+
+    .settings-section-header h1 {
+        font-size: 34px;
+    }
+
+    .settings-section-header h2 {
+        font-size: 28px;
+    }
+
+    .settings-section-lead {
+        margin: 0;
+        max-width: 820px;
+        color: var(--settings-muted);
+        font-size: 14px;
+        line-height: 1.75;
+    }
+
+    .settings-primary-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.9fr);
+        gap: 18px;
+        align-items: start;
     }
 
     .settings-topbar {
@@ -548,6 +683,24 @@
         color: var(--settings-muted);
         line-height: 1.7;
         font-size: 14px;
+    }
+
+    .settings-status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: rgba(106, 111, 247, 0.12);
+        color: var(--settings-accent);
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .settings-status-pill.is-hidden {
+        display: none;
     }
 
     .settings-form-split {
@@ -694,6 +847,12 @@
         margin-top: 8px;
     }
 
+    .settings-actions-inline {
+        justify-content: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
     .settings-actions .btn-primary,
     .settings-card .btn-primary {
         border: none;
@@ -709,6 +868,27 @@
         box-shadow: 0 18px 28px rgba(92, 99, 255, 0.28);
     }
 
+    .settings-run-button {
+        border-radius: 16px;
+        padding: 11px 20px;
+        border: 1px solid rgba(106, 111, 247, 0.22);
+        background: rgba(106, 111, 247, 0.08);
+        color: var(--settings-accent);
+        font-weight: 700;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .settings-run-button:hover {
+        transform: translateY(-1px);
+        background: rgba(106, 111, 247, 0.12);
+        box-shadow: 0 10px 20px rgba(106, 111, 247, 0.12);
+    }
+
+    .settings-run-button[disabled] {
+        opacity: 0.6;
+        cursor: wait;
+    }
+
     .settings-list {
         margin: 0;
         padding-left: 20px;
@@ -720,15 +900,128 @@
         margin-top: 6px;
     }
 
+    .settings-result-card {
+        display: grid;
+        gap: 16px;
+    }
+
+    .settings-result-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        color: var(--settings-muted);
+        font-size: 13px;
+    }
+
+    .settings-result-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .settings-stat-tile {
+        display: grid;
+        gap: 4px;
+        padding: 14px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #f6f8ff 0%, #eef2ff 100%);
+        border: 1px solid #dfe5ff;
+    }
+
+    .settings-stat-tile strong {
+        color: var(--settings-text);
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .settings-stat-tile span {
+        color: var(--settings-muted);
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .settings-note-compact {
+        margin-top: -2px;
+    }
+
+    .settings-result-list {
+        display: grid;
+        gap: 10px;
+    }
+
+    .settings-result-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: #f9faff;
+        border: 1px solid #e3e8ff;
+    }
+
+    .settings-result-item strong,
+    .settings-result-item em {
+        color: var(--settings-text);
+        font-style: normal;
+        font-weight: 700;
+    }
+
+    .settings-result-item div,
+    .settings-result-item-meta {
+        display: grid;
+        gap: 4px;
+    }
+
+    .settings-result-item span,
+    .settings-result-item small {
+        color: var(--settings-muted);
+        font-size: 12px;
+        line-height: 1.55;
+    }
+
+    .settings-empty-state {
+        display: grid;
+        gap: 8px;
+        padding: 18px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #f7f9ff 0%, #eff3ff 100%);
+        border: 1px dashed #d8defd;
+    }
+
+    .settings-empty-state strong {
+        color: var(--settings-text);
+        font-size: 16px;
+    }
+
+    .settings-empty-state p {
+        margin: 0;
+        color: var(--settings-muted);
+        line-height: 1.7;
+        font-size: 13px;
+    }
+
     @media (max-width: 900px) {
+        .settings-primary-grid,
         .settings-form-split {
             grid-template-columns: 1fr;
+        }
+
+        .settings-result-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 
     @media (max-width: 640px) {
         .settings-shell {
             gap: 18px;
+        }
+
+        .settings-section-header h1 {
+            font-size: 28px;
+        }
+
+        .settings-section-header h2 {
+            font-size: 24px;
         }
 
         .settings-topbar {
@@ -748,6 +1041,14 @@
 
         .settings-preview-entry {
             align-items: flex-start;
+        }
+
+        .settings-result-item {
+            flex-direction: column;
+        }
+
+        .settings-result-stats {
+            grid-template-columns: 1fr 1fr;
         }
     }
 </style>
@@ -789,6 +1090,106 @@
 
         const data = await response.json();
         return { response, data };
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function renderAutoReinviteResult(result) {
+        const container = document.getElementById('autoReinviteResultContent');
+        const statusPill = document.getElementById('autoReinviteStatusPill');
+
+        if (!container || !statusPill) return;
+
+        if (!result) {
+            statusPill.textContent = '';
+            statusPill.classList.add('is-hidden');
+            container.innerHTML = `
+                <div class="settings-empty-state">
+                    <strong>还没有执行记录</strong>
+                    <p>你可以先保存补邀规则，或直接点“立即执行一次补邀”查看当前候选与处理结果。</p>
+                </div>
+            `;
+            return;
+        }
+
+        const executedAt = escapeHtml(result.executed_at_display || result.executed_at || '-');
+        const triggerLabel = escapeHtml(result.trigger_source_label || '自动执行');
+        const message = escapeHtml(result.message || '最近一次执行已完成。');
+        const details = Array.isArray(result.details) ? result.details : [];
+
+        statusPill.textContent = result.trigger_source_label || '自动执行';
+        statusPill.classList.remove('is-hidden');
+
+        const detailHtml = details.length
+            ? `
+                <div class="settings-result-list">
+                    ${details.map((item) => `
+                        <div class="settings-result-item">
+                            <div>
+                                <strong>${escapeHtml(item.email || '未知邮箱')}</strong>
+                                <span>${escapeHtml(item.code || '-')}</span>
+                            </div>
+                            <div class="settings-result-item-meta">
+                                <em>${escapeHtml(item.status || 'unknown')}</em>
+                                ${item.reason
+                                    ? `<small>${escapeHtml(item.reason)}</small>`
+                                    : item.team_id
+                                        ? `<small>已补邀到 Team #${escapeHtml(item.team_id)}</small>`
+                                        : ''
+                                }
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `
+            : '';
+
+        container.innerHTML = `
+            <div class="settings-result-meta">
+                <span>执行时间：${executedAt}</span>
+                <span>触发方式：${triggerLabel}</span>
+            </div>
+
+            <div class="settings-result-stats">
+                <div class="settings-stat-tile">
+                    <strong>${escapeHtml(result.processed || 0)}</strong>
+                    <span>本轮处理</span>
+                </div>
+                <div class="settings-stat-tile">
+                    <strong>${escapeHtml(result.reinvited || 0)}</strong>
+                    <span>成功补邀</span>
+                </div>
+                <div class="settings-stat-tile">
+                    <strong>${escapeHtml(result.skipped || 0)}</strong>
+                    <span>自动跳过</span>
+                </div>
+                <div class="settings-stat-tile">
+                    <strong>${escapeHtml(result.failed || 0)}</strong>
+                    <span>执行失败</span>
+                </div>
+                <div class="settings-stat-tile">
+                    <strong>${escapeHtml(result.remaining_candidates || 0)}</strong>
+                    <span>顺延下轮</span>
+                </div>
+                <div class="settings-stat-tile">
+                    <strong>${escapeHtml(result.concurrency || 0)}</strong>
+                    <span>并发设置</span>
+                </div>
+            </div>
+
+            <div class="settings-note settings-note-compact">
+                <span class="settings-note-label">结果摘要</span>
+                <p>${message}</p>
+            </div>
+            ${detailHtml}
+        `;
     }
 
     settingsTabs.forEach((tab) => {
@@ -1012,6 +1413,29 @@
             }
         } catch (error) {
             showToast('网络错误', 'error');
+        }
+    });
+
+    document.getElementById('runAutoReinviteNow').addEventListener('click', async () => {
+        const button = document.getElementById('runAutoReinviteNow');
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = '正在执行...';
+
+        try {
+            const { response, data } = await postJson('/admin/settings/auto-reinvite/run', {});
+
+            if (response.ok && data.success) {
+                renderAutoReinviteResult(data.latest_result || null);
+                showToast(data.message || '自动补邀执行完成', 'success');
+            } else {
+                showToast(data.error || '执行失败', 'error');
+            }
+        } catch (error) {
+            showToast('网络错误', 'error');
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
         }
     });
 

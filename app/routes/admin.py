@@ -3,6 +3,7 @@
 处理管理员面板的所有页面和操作
 """
 import logging
+from datetime import datetime
 from typing import Optional, List
 import json
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -1303,6 +1304,9 @@ async def settings_page(
         # 获取当前配置
         proxy_config = await settings_service.get_proxy_config(db)
         log_level = await settings_service.get_log_level(db)
+        auto_reinvite_last_result = _parse_auto_reinvite_result(
+            await settings_service.get_setting(db, "auto_reinvite_last_result", "")
+        )
 
         return render_template_response(
             request,
@@ -1330,6 +1334,7 @@ async def settings_page(
                 "auto_reinvite_interval_minutes": await settings_service.get_setting(db, "auto_reinvite_interval_minutes", "5"),
                 "auto_reinvite_batch_size": await settings_service.get_setting(db, "auto_reinvite_batch_size", "20"),
                 "auto_reinvite_concurrency": await settings_service.get_setting(db, "auto_reinvite_concurrency", "1"),
+                "auto_reinvite_last_result": auto_reinvite_last_result,
                 "auto_status_refresh_enabled": await settings_service.get_setting(db, "auto_status_refresh_enabled", "false"),
                 "auto_status_refresh_start_time": await settings_service.get_setting(db, "auto_status_refresh_start_time", "03:00"),
                 "auto_status_refresh_interval_hours": await settings_service.get_setting(db, "auto_status_refresh_interval_hours", "24"),
@@ -1364,6 +1369,40 @@ def _is_valid_hhmm(value: str) -> bool:
         return False
 
     return 0 <= hour <= 23 and 0 <= minute <= 59
+
+
+def _format_iso_datetime(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+
+    try:
+        dt = datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return value
+
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _parse_auto_reinvite_result(raw_value: Optional[str]) -> Optional[dict]:
+    if not raw_value:
+        return None
+
+    try:
+        data = json.loads(raw_value)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+
+    trigger_source = data.get("trigger_source")
+    trigger_map = {
+        "manual": "手动执行",
+        "scheduled": "定时扫描",
+        "ban_event": "封号触发",
+        "event": "即时触发",
+    }
+    data["trigger_source_label"] = trigger_map.get(trigger_source, "自动执行")
+    data["executed_at_display"] = _format_iso_datetime(data.get("executed_at"))
+    data["details"] = list(data.get("details") or [])[:12]
+    return data
 
 
 class WebhookSettingsRequest(BaseModel):
@@ -1697,6 +1736,42 @@ async def update_auto_reinvite_settings(
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"success": False, "error": f"更新失败: {str(e)}"}
+        )
+
+
+@router.post("/settings/auto-reinvite/run")
+async def run_auto_reinvite_now(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    """立即执行一次自动补邀。"""
+    try:
+        from app.services.auto_reinvite import auto_reinvite_service
+        from app.services.settings import settings_service
+
+        logger.info("管理员手动执行一次自动补邀")
+
+        summary = await auto_reinvite_service.process_once(
+            ignore_enabled=True,
+            trigger_source="manual",
+        )
+        latest_result = _parse_auto_reinvite_result(
+            await settings_service.get_setting(db, "auto_reinvite_last_result", "")
+        )
+
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": summary.get("message") or "自动补邀执行完成",
+                "summary": summary,
+                "latest_result": latest_result,
+            }
+        )
+    except Exception as e:
+        logger.error(f"手动执行自动补邀失败: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": f"执行失败: {str(e)}"}
         )
 
 

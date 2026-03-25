@@ -42,6 +42,7 @@ class AutoReinviteProcessTests(unittest.IsolatedAsyncioTestCase):
     async def test_process_once_respects_batch_size_and_marks_slot(self):
         service = AutoReinviteService()
         marked_slots = []
+        stored_snapshots = []
         captured_candidates = []
         captured_concurrency = []
 
@@ -73,26 +74,32 @@ class AutoReinviteProcessTests(unittest.IsolatedAsyncioTestCase):
         async def fake_mark_last_slot(slot_value):
             marked_slots.append(slot_value)
 
+        async def fake_store_last_result(snapshot):
+            stored_snapshots.append(snapshot)
+
         original_session_local = auto_reinvite_module.AsyncSessionLocal
         original_load_config = service._load_config
         original_collect_candidates = service._collect_candidates
         original_run_candidates = service._run_candidates
         original_mark_last_slot = service._mark_last_slot
+        original_store_last_result = service._store_last_result
 
         auto_reinvite_module.AsyncSessionLocal = lambda: _DummySessionContext()
         service._load_config = fake_load_config
         service._collect_candidates = fake_collect_candidates
         service._run_candidates = fake_run_candidates
         service._mark_last_slot = fake_mark_last_slot
+        service._store_last_result = fake_store_last_result
 
         try:
-            summary = await service.process_once("2026-03-25T00:00:00+08:00")
+            summary = await service.process_once("2026-03-25T00:00:00+08:00", trigger_source="scheduled")
         finally:
             auto_reinvite_module.AsyncSessionLocal = original_session_local
             service._load_config = original_load_config
             service._collect_candidates = original_collect_candidates
             service._run_candidates = original_run_candidates
             service._mark_last_slot = original_mark_last_slot
+            service._store_last_result = original_store_last_result
 
         self.assertEqual(summary["processed"], 2)
         self.assertEqual(summary["reinvited"], 1)
@@ -105,6 +112,56 @@ class AutoReinviteProcessTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(captured_concurrency, [3])
         self.assertEqual(captured_candidates, [{"code": "A", "email": "a@example.com"}, {"code": "B", "email": "b@example.com"}])
         self.assertEqual(marked_slots, ["2026-03-25T00:00:00+08:00"])
+        self.assertEqual(stored_snapshots[0]["trigger_source"], "scheduled")
+        self.assertEqual(stored_snapshots[0]["remaining_candidates"], 1)
+
+    async def test_process_once_can_run_manually_when_disabled(self):
+        service = AutoReinviteService()
+        stored_snapshots = []
+
+        async def fake_load_config(_db_session):
+            return {
+                "enabled": False,
+                "start_time": "00:00",
+                "interval_minutes": 5,
+                "batch_size": 5,
+                "concurrency": 1,
+                "last_slot": "",
+            }
+
+        async def fake_collect_candidates(_db_session):
+            return [{"code": "A", "email": "manual@example.com"}]
+
+        async def fake_run_candidates(candidates, concurrency):
+            return [{"status": "reinvited", "code": candidates[0]["code"], "email": candidates[0]["email"], "team_id": 9}]
+
+        async def fake_store_last_result(snapshot):
+            stored_snapshots.append(snapshot)
+
+        original_session_local = auto_reinvite_module.AsyncSessionLocal
+        original_load_config = service._load_config
+        original_collect_candidates = service._collect_candidates
+        original_run_candidates = service._run_candidates
+        original_store_last_result = service._store_last_result
+
+        auto_reinvite_module.AsyncSessionLocal = lambda: _DummySessionContext()
+        service._load_config = fake_load_config
+        service._collect_candidates = fake_collect_candidates
+        service._run_candidates = fake_run_candidates
+        service._store_last_result = fake_store_last_result
+
+        try:
+            summary = await service.process_once(ignore_enabled=True, trigger_source="manual")
+        finally:
+            auto_reinvite_module.AsyncSessionLocal = original_session_local
+            service._load_config = original_load_config
+            service._collect_candidates = original_collect_candidates
+            service._run_candidates = original_run_candidates
+            service._store_last_result = original_store_last_result
+
+        self.assertEqual(summary["processed"], 1)
+        self.assertEqual(summary["reinvited"], 1)
+        self.assertEqual(stored_snapshots[0]["trigger_source"], "manual")
 
 
 if __name__ == "__main__":

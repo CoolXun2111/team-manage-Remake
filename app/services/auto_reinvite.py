@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
@@ -129,6 +130,41 @@ class AutoReinviteService:
                 slot_value,
             )
 
+    @staticmethod
+    async def _store_last_result(snapshot: Dict[str, Any]) -> None:
+        async with AsyncSessionLocal() as db_session:
+            await settings_service.update_setting(
+                db_session,
+                "auto_reinvite_last_result",
+                json.dumps(snapshot, ensure_ascii=False),
+            )
+
+    @staticmethod
+    def _build_result_snapshot(
+        summary: Dict[str, Any],
+        *,
+        trigger_source: str,
+        slot_key: Optional[str],
+    ) -> Dict[str, Any]:
+        tz = pytz.timezone(settings.timezone)
+        detail_items = list(summary.get("details") or [])[:12]
+        return {
+            "executed_at": datetime.now(tz).isoformat(),
+            "trigger_source": trigger_source,
+            "slot_key": slot_key,
+            "success": bool(summary.get("success", False)),
+            "processed": int(summary.get("processed", 0) or 0),
+            "reinvited": int(summary.get("reinvited", 0) or 0),
+            "skipped": int(summary.get("skipped", 0) or 0),
+            "failed": int(summary.get("failed", 0) or 0),
+            "total_candidates": int(summary.get("total_candidates", 0) or 0),
+            "remaining_candidates": int(summary.get("remaining_candidates", 0) or 0),
+            "batch_size": int(summary.get("batch_size", 0) or 0),
+            "concurrency": int(summary.get("concurrency", 0) or 0),
+            "message": summary.get("message") or "",
+            "details": detail_items,
+        }
+
     def _classify_candidate(
         self,
         record: RedemptionRecord,
@@ -208,7 +244,7 @@ class AutoReinviteService:
                     )
                     slot_key = current_slot.isoformat()
                     if slot_key != config["last_slot"]:
-                        await self.process_once(slot_key)
+                        await self.process_once(slot_key, trigger_source="scheduled")
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
@@ -255,12 +291,18 @@ class AutoReinviteService:
 
         return normalized_results
 
-    async def process_once(self, slot_key: Optional[str] = None) -> Dict[str, Any]:
+    async def process_once(
+        self,
+        slot_key: Optional[str] = None,
+        *,
+        ignore_enabled: bool = False,
+        trigger_source: str = "event",
+    ) -> Dict[str, Any]:
         """执行一轮自动补邀巡检。"""
         async with self._run_lock:
             async with AsyncSessionLocal() as db_session:
                 config = await self._load_config(db_session)
-                if not config["enabled"]:
+                if not config["enabled"] and not ignore_enabled:
                     return {
                         "success": True,
                         "processed": 0,
@@ -325,6 +367,13 @@ class AutoReinviteService:
 
             if slot_key:
                 await self._mark_last_slot(slot_key)
+            await self._store_last_result(
+                self._build_result_snapshot(
+                    summary,
+                    trigger_source=trigger_source,
+                    slot_key=slot_key,
+                )
+            )
             return summary
 
     async def _collect_candidates(self, db_session) -> List[Dict[str, Any]]:

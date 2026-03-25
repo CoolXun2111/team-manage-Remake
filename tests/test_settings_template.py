@@ -30,7 +30,24 @@ class SettingsTemplateTests(unittest.TestCase):
                 "after_sales_group_subtitle": "Join the support group if needed",
                 "default_team_seat_limit": "6",
                 "auto_reinvite_enabled": "false",
-                "auto_reinvite_interval_seconds": "300",
+                "auto_reinvite_start_time": "00:00",
+                "auto_reinvite_interval_minutes": "5",
+                "auto_reinvite_batch_size": "20",
+                "auto_reinvite_concurrency": "1",
+                "auto_reinvite_last_result": {
+                    "executed_at_display": "2026-03-25 14:00:00",
+                    "trigger_source_label": "手动执行",
+                    "processed": 2,
+                    "reinvited": 1,
+                    "skipped": 1,
+                    "failed": 0,
+                    "remaining_candidates": 3,
+                    "concurrency": 2,
+                    "message": "自动补邀执行完成",
+                    "details": [
+                        {"email": "user@example.com", "code": "CODE-1", "status": "reinvited", "team_id": 88}
+                    ],
+                },
                 "auto_status_refresh_enabled": "false",
                 "auto_status_refresh_start_time": "03:00",
                 "auto_status_refresh_interval_hours": "24",
@@ -43,17 +60,21 @@ class SettingsTemplateTests(unittest.TestCase):
         self.assertIn('class="settings-topbar"', html)
         self.assertNotIn("settings-hero-pill", html)
         self.assertIn('data-panel="panel-after-sales"', html)
+        self.assertIn(">自动补邀<", html)
+        self.assertIn(">系统设置<", html)
 
     def test_renders_auto_reinvite_rule_list(self):
         html = self.render_settings()
 
         self.assertIn('id="autoReinviteForm"', html)
         self.assertIn('class="settings-list settings-rule-list"', html)
-        self.assertIn("panel-auto-reinvite", html)
+        self.assertNotIn('data-panel="panel-auto-reinvite"', html)
         self.assertIn('id="autoReinviteStartTime"', html)
         self.assertIn('id="autoReinviteIntervalMinutes"', html)
         self.assertIn('id="autoReinviteBatchSize"', html)
         self.assertIn('id="autoReinviteConcurrency"', html)
+        self.assertIn('id="runAutoReinviteNow"', html)
+        self.assertIn('id="autoReinviteResultContent"', html)
 
 
 if __name__ == "__main__":

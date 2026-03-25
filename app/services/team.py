@@ -146,7 +146,7 @@ class TeamService:
                 await db_session.commit()
             try:
                 from app.services.auto_reinvite import auto_reinvite_service
-                asyncio.create_task(auto_reinvite_service.process_once())
+                asyncio.create_task(auto_reinvite_service.process_once(trigger_source="ban_event"))
             except Exception as exc:
                 logger.warning(f"触发自动补邀巡检失败: {exc}")
             return True
