@@ -3,196 +3,551 @@
 {% block title %}系统设置 - GPT Team 管理系统{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>系统设置</h2>
-</div>
-
-<div class="content-section">
-    <div class="section-header">
-        <h3>代理配置</h3>
+<section class="settings-shell">
+    <div class="settings-hero">
+        <div>
+            <p class="settings-kicker">System Control</p>
+            <h2>系统设置</h2>
+            <p class="settings-subtitle">按模块集中管理代理、账号安全、日志和自动化任务。</p>
+        </div>
     </div>
 
-    <form id="proxyForm" class="settings-form">
-        <div class="form-group">
-            <label class="checkbox-label">
-                <input type="checkbox" id="proxyEnabled" name="enabled" {% if proxy_enabled %}checked{% endif %}>
-                <span>启用代理</span>
-            </label>
-            <p class="form-help">开启后，系统内所有 ChatGPT API 请求都会走代理。</p>
-        </div>
-
-        <div class="form-group">
-            <label for="proxyUrl">代理地址</label>
-            <input type="text" id="proxyUrl" name="proxy" value="{{ proxy or '' }}"
-                placeholder="http://127.0.0.1:7890 或 socks5://127.0.0.1:1080" class="form-control">
-            <p class="form-help">支持 `http://`、`https://`、`socks5://` 和 `socks5h://`。</p>
-        </div>
-
-        <button type="submit" class="btn btn-primary">保存代理配置</button>
-    </form>
-</div>
-
-<div class="content-section">
-    <div class="section-header">
-        <h3>修改密码</h3>
+    <div class="settings-tabs" role="tablist" aria-label="系统设置导航">
+        <button type="button" class="settings-tab is-active" data-panel="panel-proxy" role="tab" aria-selected="true">
+            代理配置
+        </button>
+        <button type="button" class="settings-tab" data-panel="panel-password" role="tab" aria-selected="false">
+            修改密码
+        </button>
+        <button type="button" class="settings-tab" data-panel="panel-log" role="tab" aria-selected="false">
+            日志级别
+        </button>
+        <button type="button" class="settings-tab" data-panel="panel-token" role="tab" aria-selected="false">
+            Token 预刷新
+        </button>
+        <button type="button" class="settings-tab" data-panel="panel-team-refresh" role="tab" aria-selected="false">
+            Team 自动刷新
+        </button>
     </div>
 
-    <form id="passwordForm" class="settings-form">
-        <div class="form-group">
-            <label for="oldPassword">旧密码</label>
-            <input type="password" id="oldPassword" name="old_password" required class="form-control"
-                placeholder="请输入当前密码">
-        </div>
+    <div class="settings-panels">
+        <section id="panel-proxy" class="settings-panel is-active" role="tabpanel">
+            <form id="proxyForm" class="settings-form-grid">
+                <article class="settings-card settings-card-wide">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>代理配置</h3>
+                            <p>控制系统内所有 OpenAI 请求的代理出口，适合海外线路或统一网络转发。</p>
+                        </div>
+                    </div>
 
-        <div class="form-group">
-            <label for="newPassword">新密码</label>
-            <input type="password" id="newPassword" name="new_password" required minlength="6" class="form-control"
-                placeholder="请输入新密码，至少 6 位">
-        </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="proxyEnabled" name="enabled" {% if proxy_enabled %}checked{% endif %}>
+                            <span>启用代理</span>
+                        </label>
+                        <p class="form-help">开启后，系统内所有 ChatGPT API 请求都会走代理。</p>
+                    </div>
 
-        <div class="form-group">
-            <label for="confirmPassword">确认新密码</label>
-            <input type="password" id="confirmPassword" name="confirm_password" required minlength="6"
-                class="form-control" placeholder="请再次输入新密码">
-        </div>
+                    <div class="form-group">
+                        <label for="proxyUrl">代理地址</label>
+                        <input type="text" id="proxyUrl" name="proxy" value="{{ proxy or '' }}"
+                            placeholder="http://127.0.0.1:7890 或 socks5://127.0.0.1:1080" class="form-control">
+                        <p class="form-help">支持 `http://`、`https://`、`socks5://` 和 `socks5h://`。</p>
+                    </div>
 
-        <button type="submit" class="btn btn-primary">修改密码</button>
-        <p class="form-help">修改完成后会自动跳转回登录页。</p>
-    </form>
-</div>
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存代理配置</button>
+                    </div>
+                </article>
+            </form>
+        </section>
 
-<div class="content-section">
-    <div class="section-header">
-        <h3>日志级别</h3>
+        <section id="panel-password" class="settings-panel" role="tabpanel" hidden>
+            <form id="passwordForm" class="settings-form-grid">
+                <article class="settings-card settings-card-narrow">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>修改密码</h3>
+                            <p>修改管理员密码后，当前会话会跳回登录页重新验证。</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="oldPassword">旧密码</label>
+                        <input type="password" id="oldPassword" name="old_password" required class="form-control"
+                            placeholder="请输入当前密码">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">新密码</label>
+                        <input type="password" id="newPassword" name="new_password" required minlength="6" class="form-control"
+                            placeholder="请输入新密码，至少 6 位">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">确认新密码</label>
+                        <input type="password" id="confirmPassword" name="confirm_password" required minlength="6"
+                            class="form-control" placeholder="请再次输入新密码">
+                    </div>
+
+                    <p class="form-help">建议使用与旧密码不同的组合，避免简单连续字符。</p>
+
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存新密码</button>
+                    </div>
+                </article>
+            </form>
+        </section>
+
+        <section id="panel-log" class="settings-panel" role="tabpanel" hidden>
+            <form id="logLevelForm" class="settings-form-grid">
+                <article class="settings-card settings-card-narrow">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>日志级别</h3>
+                            <p>控制后台日志的详细程度，排查问题时可临时切到更高详细度。</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="logLevel">日志级别</label>
+                        <select id="logLevel" name="level" class="form-control">
+                            <option value="DEBUG" {% if log_level == 'DEBUG' %}selected{% endif %}>DEBUG</option>
+                            <option value="INFO" {% if log_level == 'INFO' %}selected{% endif %}>INFO</option>
+                            <option value="WARNING" {% if log_level == 'WARNING' %}selected{% endif %}>WARNING</option>
+                            <option value="ERROR" {% if log_level == 'ERROR' %}selected{% endif %}>ERROR</option>
+                            <option value="CRITICAL" {% if log_level == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
+                        </select>
+                        <p class="form-help">默认建议使用 `INFO`，只有在排障或接入阶段再切到 `DEBUG`。</p>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存日志级别</button>
+                    </div>
+                </article>
+            </form>
+        </section>
+
+        <section id="panel-token" class="settings-panel" role="tabpanel" hidden>
+            <form id="webhookForm" class="settings-form-grid">
+                <article class="settings-card settings-card-wide">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>补货通知</h3>
+                            <p>库存不足时可自动通知外部系统补货，也能同步传递 API Key 供第三方调用。</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="webhookUrl">Webhook URL</label>
+                        <input type="text" id="webhookUrl" name="webhook_url" value="{{ webhook_url or '' }}"
+                            placeholder="https://your-api.com/webhook" class="form-control">
+                        <p class="form-help">当系统剩余总席位低于阈值时，会向这里发送补货通知。</p>
+                    </div>
+
+                    <div class="settings-form-split">
+                        <div class="form-group">
+                            <label for="lowStockThreshold">库存预警阈值</label>
+                            <input type="number" id="lowStockThreshold" name="low_stock_threshold"
+                                value="{{ low_stock_threshold or '10' }}" min="0" class="form-control">
+                            <p class="form-help">剩余总席位小于或等于这个值时触发 Webhook。</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apiKey">API Key</label>
+                            <input type="text" id="apiKey" name="api_key" value="{{ api_key or '' }}"
+                                placeholder="外部系统调用时使用的 X-API-Key" class="form-control">
+                            <p class="form-help">用于库存或补货系统对接。</p>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="settings-card">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>Team 默认限制</h3>
+                            <p>控制新导入母号默认可分配的席位上限。</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="defaultTeamSeatLimit">新 Team 默认席位上限</label>
+                        <input type="number" id="defaultTeamSeatLimit" name="default_team_seat_limit"
+                            value="{{ default_team_seat_limit or '6' }}" min="1" max="100" class="form-control">
+                        <p class="form-help">单个 Team 仍可在编辑弹窗里单独调整。</p>
+                    </div>
+                </article>
+
+                <article class="settings-card">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>补邀与质保策略</h3>
+                            <p>用于处理失效母号后的自动补邀，以及质保期内的重复兑付逻辑。</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="autoReinviteEnabled" name="auto_reinvite_enabled"
+                                {% if auto_reinvite_enabled == 'true' %}checked{% endif %}>
+                            <span>启用失效母号自动补邀</span>
+                        </label>
+                        <p class="form-help">仅处理拥有质保兑换码的子号邮箱。母号邮箱，尤其是已封禁母号，会自动跳过。</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="autoReinviteInterval">自动补邀巡检间隔（秒）</label>
+                        <input type="number" id="autoReinviteInterval" name="auto_reinvite_interval_seconds"
+                            value="{{ auto_reinvite_interval_seconds or '300' }}" min="60" class="form-control">
+                        <p class="form-help">建议不低于 60 秒。时间越短，补邀越快，但 API 请求也会更频繁。</p>
+                    </div>
+
+                    <div class="settings-note">
+                        <span class="settings-note-label">质保规则</span>
+                        <p>质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。</p>
+                    </div>
+                </article>
+
+                <div class="settings-actions settings-actions-full">
+                    <button type="submit" class="btn btn-primary">保存 Token 相关设置</button>
+                </div>
+            </form>
+        </section>
+
+        <section id="panel-team-refresh" class="settings-panel" role="tabpanel" hidden>
+            <form id="teamRefreshForm" class="settings-form-grid">
+                <article class="settings-card">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>计划设置</h3>
+                            <p>按你设定的起始时间和周期自动刷新 Team 状态，适合夜间或固定节奏巡检。</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="autoStatusRefreshEnabled" name="auto_status_refresh_enabled"
+                                {% if auto_status_refresh_enabled == 'true' %}checked{% endif %}>
+                            <span>启用账号状态自动刷新</span>
+                        </label>
+                        <p class="form-help">系统会按计划自动同步非封禁 Team 的账号状态、席位和到期信息。</p>
+                    </div>
+
+                    <div class="settings-form-split">
+                        <div class="form-group">
+                            <label for="autoStatusRefreshStartTime">自动刷新时间</label>
+                            <input type="time" id="autoStatusRefreshStartTime" name="auto_status_refresh_start_time"
+                                value="{{ auto_status_refresh_start_time or '03:00' }}" class="form-control">
+                            <p class="form-help">这是首轮执行时间，之后按刷新周期循环运行。</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="autoStatusRefreshIntervalHours">刷新周期（小时）</label>
+                            <input type="number" id="autoStatusRefreshIntervalHours" name="auto_status_refresh_interval_hours"
+                                value="{{ auto_status_refresh_interval_hours or '24' }}" min="1" max="24" class="form-control">
+                            <p class="form-help">支持 1-24 小时。</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存 Team 自动刷新</button>
+                    </div>
+                </article>
+
+                <article class="settings-card">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>执行规则</h3>
+                            <p>当前自动刷新任务的实际行为说明，方便你按资源和频率做平衡。</p>
+                        </div>
+                    </div>
+
+                    <ul class="settings-list">
+                        <li>仅同步非封禁 Team，避免对已失效母号做无意义请求。</li>
+                        <li>每轮会刷新账号状态、席位人数和到期信息，沿用现有同步逻辑。</li>
+                        <li>修改时间或周期后，会从新的时间槽重新开始计算执行计划。</li>
+                        <li>如果你设置为 03:00 且周期 6 小时，则会在 03:00、09:00、15:00、21:00 运行。</li>
+                    </ul>
+                </article>
+            </form>
+        </section>
     </div>
-
-    <form id="logLevelForm" class="settings-form">
-        <div class="form-group">
-            <label for="logLevel">日志级别</label>
-            <select id="logLevel" name="level" class="form-control">
-                <option value="DEBUG" {% if log_level == 'DEBUG' %}selected{% endif %}>DEBUG</option>
-                <option value="INFO" {% if log_level == 'INFO' %}selected{% endif %}>INFO</option>
-                <option value="WARNING" {% if log_level == 'WARNING' %}selected{% endif %}>WARNING</option>
-                <option value="ERROR" {% if log_level == 'ERROR' %}selected{% endif %}>ERROR</option>
-                <option value="CRITICAL" {% if log_level == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
-            </select>
-            <p class="form-help">推荐默认使用 `INFO`，排查异常时再切到 `DEBUG`。</p>
-        </div>
-
-        <button type="submit" class="btn btn-primary">保存日志级别</button>
-    </form>
-</div>
-
-<div class="content-section">
-    <div class="section-header">
-        <h3>库存、席位与自动补邀</h3>
-    </div>
-
-    <form id="webhookForm" class="settings-form">
-        <div class="form-group">
-            <label for="webhookUrl">Webhook URL</label>
-            <input type="text" id="webhookUrl" name="webhook_url" value="{{ webhook_url or '' }}"
-                placeholder="https://your-api.com/webhook" class="form-control">
-            <p class="form-help">当系统剩余总席位低于阈值时，会向这里发送补货通知。</p>
-        </div>
-
-        <div class="form-group">
-            <label for="lowStockThreshold">库存预警阈值</label>
-            <input type="number" id="lowStockThreshold" name="low_stock_threshold"
-                value="{{ low_stock_threshold or '10' }}" min="0" class="form-control">
-            <p class="form-help">剩余总席位小于或等于这个值时触发 Webhook。</p>
-        </div>
-
-        <div class="form-group">
-            <label for="apiKey">API Key</label>
-            <input type="text" id="apiKey" name="api_key" value="{{ api_key or '' }}"
-                placeholder="外部系统调用时使用的 X-API-Key" class="form-control">
-            <p class="form-help">用于库存或补货系统对接。</p>
-        </div>
-
-        <div class="form-group">
-            <label for="defaultTeamSeatLimit">新 Team 默认席位上限</label>
-            <input type="number" id="defaultTeamSeatLimit" name="default_team_seat_limit"
-                value="{{ default_team_seat_limit or '6' }}" min="1" max="100" class="form-control">
-            <p class="form-help">新导入的 Team 默认使用这个席位上限，单个 Team 仍可在编辑弹窗里单独调整。</p>
-        </div>
-
-        <div class="form-group">
-            <label class="checkbox-label">
-                <input type="checkbox" id="autoReinviteEnabled" name="auto_reinvite_enabled"
-                    {% if auto_reinvite_enabled == 'true' %}checked{% endif %}>
-                <span>启用失效母号自动补邀</span>
-            </label>
-            <p class="form-help">仅处理拥有质保兑换码的子号邮箱。母号邮箱，尤其是已封禁母号，会自动跳过。</p>
-        </div>
-
-        <div class="form-group">
-            <label for="autoReinviteInterval">自动补邀巡检间隔（秒）</label>
-            <input type="number" id="autoReinviteInterval" name="auto_reinvite_interval_seconds"
-                value="{{ auto_reinvite_interval_seconds or '300' }}" min="60" class="form-control">
-            <p class="form-help">建议不低于 60 秒。时间越短，补邀越快，但 API 请求也会更频繁。</p>
-        </div>
-
-        <div class="form-group">
-            <label class="checkbox-label">
-                <input type="checkbox" id="autoStatusRefreshEnabled" name="auto_status_refresh_enabled"
-                    {% if auto_status_refresh_enabled == 'true' %}checked{% endif %}>
-                <span>启用账号状态自动刷新</span>
-            </label>
-            <p class="form-help">系统会按计划自动同步非封禁 Team 的账号状态、席位和到期信息。</p>
-        </div>
-
-        <div class="form-group">
-            <label for="autoStatusRefreshStartTime">账号状态自动刷新时间</label>
-            <input type="time" id="autoStatusRefreshStartTime" name="auto_status_refresh_start_time"
-                value="{{ auto_status_refresh_start_time or '03:00' }}" class="form-control">
-            <p class="form-help">这是首轮刷新时间，之后会按下面的周期循环执行。</p>
-        </div>
-
-        <div class="form-group">
-            <label for="autoStatusRefreshIntervalHours">账号状态自动刷新周期（小时）</label>
-            <input type="number" id="autoStatusRefreshIntervalHours" name="auto_status_refresh_interval_hours"
-                value="{{ auto_status_refresh_interval_hours or '24' }}" min="1" max="24" class="form-control">
-            <p class="form-help">支持 1-24 小时；例如开始时间 03:00、周期 6 小时，则会在 03:00、09:00、15:00、21:00 执行。</p>
-        </div>
-
-        <div class="form-group">
-            <label>质保规则</label>
-            <div class="form-control readonly-block">
-                质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary">保存设置</button>
-    </form>
-</div>
+</section>
 {% endblock %}
 
 {% block extra_css %}
 <style>
+    .settings-shell {
+        display: grid;
+        gap: 1.5rem;
+    }
+
+    .settings-hero {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .settings-kicker {
+        margin: 0 0 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #9a7b53;
+    }
+
+    .settings-hero h2 {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 2.6rem);
+        letter-spacing: -0.03em;
+    }
+
+    .settings-subtitle {
+        margin: 0.65rem 0 0;
+        max-width: 44rem;
+        color: var(--text-muted);
+    }
+
+    .settings-tabs {
+        display: flex;
+        gap: 0.75rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+        scrollbar-width: none;
+    }
+
+    .settings-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .settings-tab {
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: rgba(255, 255, 255, 0.66);
+        color: var(--text-secondary);
+        border-radius: 999px;
+        padding: 0.85rem 1.2rem;
+        font-size: 0.98rem;
+        font-weight: 600;
+        white-space: nowrap;
+        transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .settings-tab:hover {
+        transform: translateY(-1px);
+        border-color: rgba(154, 123, 83, 0.32);
+    }
+
+    .settings-tab.is-active {
+        background: #f4e6d5;
+        color: #6f4f2b;
+        border-color: rgba(154, 123, 83, 0.12);
+        box-shadow: 0 10px 24px rgba(186, 139, 83, 0.12);
+    }
+
+    .settings-panel[hidden] {
+        display: none !important;
+    }
+
+    .settings-panel.is-active {
+        animation: settings-panel-fade 0.22s ease;
+    }
+
+    @keyframes settings-panel-fade {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .settings-form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.25rem;
+    }
+
+    .settings-card {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        border-radius: 24px;
+        padding: 1.35rem;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+    }
+
+    .settings-card-wide {
+        grid-column: 1 / -1;
+    }
+
+    .settings-card-narrow {
+        max-width: 40rem;
+    }
+
+    .settings-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.1rem;
+    }
+
+    .settings-card-header h3 {
+        margin: 0;
+        font-size: 1.08rem;
+    }
+
+    .settings-card-header p {
+        margin: 0.4rem 0 0;
+        color: var(--text-muted);
+        line-height: 1.65;
+    }
+
+    .settings-form-split {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
     .checkbox-label {
         display: flex;
         align-items: center;
-        cursor: pointer;
         gap: 0.75rem;
-        margin-bottom: 0.5rem;
+        cursor: pointer;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
     }
 
     .form-help {
-        font-size: 0.8125rem;
+        margin-top: 0.4rem;
         color: var(--text-muted);
-        margin-top: 0.375rem;
+        font-size: 0.82rem;
+        line-height: 1.6;
     }
 
-    .readonly-block {
-        background: #f8fafc;
-        color: #334155;
+    .settings-note {
+        margin-top: 1rem;
+        padding: 1rem 1.05rem;
+        border-radius: 18px;
+        background: #f8f1e7;
+        border: 1px solid rgba(191, 145, 93, 0.16);
+    }
+
+    .settings-note-label {
+        display: inline-block;
+        margin-bottom: 0.35rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #8a6840;
+    }
+
+    .settings-note p {
+        margin: 0;
+        color: #6b4d2a;
+        line-height: 1.7;
+    }
+
+    .settings-list {
+        margin: 0;
+        padding-left: 1.15rem;
+        color: var(--text-secondary);
+        display: grid;
+        gap: 0.7rem;
+        line-height: 1.7;
+    }
+
+    .settings-actions {
+        display: flex;
+        justify-content: flex-start;
+        margin-top: 1.2rem;
+    }
+
+    .settings-actions-full {
+        grid-column: 1 / -1;
+        margin-top: 0;
+    }
+
+    @media (max-width: 900px) {
+        .settings-form-grid,
+        .settings-form-split {
+            grid-template-columns: 1fr;
+        }
+
+        .settings-card-narrow {
+            max-width: none;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .settings-shell {
+            gap: 1.1rem;
+        }
+
+        .settings-card {
+            padding: 1.1rem;
+            border-radius: 20px;
+        }
+
+        .settings-tab {
+            padding: 0.78rem 1rem;
+            font-size: 0.94rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    const settingsTabs = Array.from(document.querySelectorAll('.settings-tab'));
+    const settingsPanels = Array.from(document.querySelectorAll('.settings-panel'));
+
+    function activateSettingsPanel(panelId) {
+        settingsTabs.forEach((tab) => {
+            const isActive = tab.dataset.panel === panelId;
+            tab.classList.toggle('is-active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+
+        settingsPanels.forEach((panel) => {
+            const isActive = panel.id === panelId;
+            panel.classList.toggle('is-active', isActive);
+            panel.hidden = !isActive;
+        });
+
+        try {
+            localStorage.setItem('settings-active-panel', panelId);
+        } catch (error) {
+            console.debug('无法缓存设置页签', error);
+        }
+    }
+
+    settingsTabs.forEach((tab) => {
+        tab.addEventListener('click', () => activateSettingsPanel(tab.dataset.panel));
+    });
+
+    (() => {
+        const hashPanel = window.location.hash.replace('#', '');
+        let initialPanel = hashPanel;
+
+        if (!initialPanel) {
+            try {
+                initialPanel = localStorage.getItem('settings-active-panel');
+            } catch (error) {
+                initialPanel = null;
+            }
+        }
+
+        const panelExists = initialPanel && document.getElementById(initialPanel);
+        activateSettingsPanel(panelExists ? initialPanel : 'panel-proxy');
+    })();
+
     document.getElementById('proxyForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -301,9 +656,6 @@
         const default_team_seat_limit = parseInt(document.getElementById('defaultTeamSeatLimit').value, 10);
         const auto_reinvite_enabled = document.getElementById('autoReinviteEnabled').checked;
         const auto_reinvite_interval_seconds = parseInt(document.getElementById('autoReinviteInterval').value, 10);
-        const auto_status_refresh_enabled = document.getElementById('autoStatusRefreshEnabled').checked;
-        const auto_status_refresh_start_time = document.getElementById('autoStatusRefreshStartTime').value;
-        const auto_status_refresh_interval_hours = parseInt(document.getElementById('autoStatusRefreshIntervalHours').value, 10);
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
@@ -320,16 +672,6 @@
             return;
         }
 
-        if (!/^\d{2}:\d{2}$/.test(auto_status_refresh_start_time)) {
-            showToast('请输入有效的账号状态自动刷新时间', 'error');
-            return;
-        }
-
-        if (isNaN(auto_status_refresh_interval_hours) || auto_status_refresh_interval_hours < 1 || auto_status_refresh_interval_hours > 24) {
-            showToast('账号状态自动刷新周期必须在 1-24 小时之间', 'error');
-            return;
-        }
-
         try {
             const response = await fetch('/admin/settings/webhook', {
                 method: 'POST',
@@ -342,7 +684,45 @@
                     api_key,
                     default_team_seat_limit,
                     auto_reinvite_enabled,
-                    auto_reinvite_interval_seconds,
+                    auto_reinvite_interval_seconds
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+                showToast('Token 相关设置已保存', 'success');
+            } else {
+                showToast(data.error || '保存失败', 'error');
+            }
+        } catch (error) {
+            showToast('网络错误', 'error');
+        }
+    });
+
+    document.getElementById('teamRefreshForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const auto_status_refresh_enabled = document.getElementById('autoStatusRefreshEnabled').checked;
+        const auto_status_refresh_start_time = document.getElementById('autoStatusRefreshStartTime').value;
+        const auto_status_refresh_interval_hours = parseInt(document.getElementById('autoStatusRefreshIntervalHours').value, 10);
+
+        if (!/^\d{2}:\d{2}$/.test(auto_status_refresh_start_time)) {
+            showToast('请输入有效的自动刷新时间', 'error');
+            return;
+        }
+
+        if (isNaN(auto_status_refresh_interval_hours) || auto_status_refresh_interval_hours < 1 || auto_status_refresh_interval_hours > 24) {
+            showToast('刷新周期必须在 1-24 小时之间', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/admin/settings/team-refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
                     auto_status_refresh_enabled,
                     auto_status_refresh_start_time,
                     auto_status_refresh_interval_hours
@@ -351,7 +731,7 @@
 
             const data = await response.json();
             if (response.ok && data.success) {
-                showToast('设置已保存', 'success');
+                showToast('Team 自动刷新配置已保存', 'success');
             } else {
                 showToast(data.error || '保存失败', 'error');
             }

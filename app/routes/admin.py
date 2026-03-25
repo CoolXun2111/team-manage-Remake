@@ -1364,6 +1364,10 @@ class WebhookSettingsRequest(BaseModel):
     default_team_seat_limit: int = Field(6, description="默认席位上限")
     auto_reinvite_enabled: bool = Field(False, description="是否启用自动补邀")
     auto_reinvite_interval_seconds: int = Field(300, description="自动补邀巡检间隔")
+
+
+class TeamRefreshSettingsRequest(BaseModel):
+    """Team 自动刷新设置请求"""
     auto_status_refresh_enabled: bool = Field(False, description="是否启用账号状态自动刷新")
     auto_status_refresh_start_time: str = Field("03:00", description="账号状态自动刷新开始时间")
     auto_status_refresh_interval_hours: int = Field(24, description="账号状态自动刷新周期")
@@ -1497,18 +1501,6 @@ async def update_webhook_settings(
                 content={"success": False, "error": "自动补邀巡检间隔不能小于 60 秒"}
             )
 
-        if not _is_valid_hhmm(webhook_data.auto_status_refresh_start_time):
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content={"success": False, "error": "账号状态自动刷新时间格式错误，请使用 HH:MM"}
-            )
-
-        if webhook_data.auto_status_refresh_interval_hours < 1 or webhook_data.auto_status_refresh_interval_hours > 24:
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content={"success": False, "error": "账号状态自动刷新周期必须在 1-24 小时之间"}
-            )
-
         settings = {
             "webhook_url": webhook_data.webhook_url.strip(),
             "low_stock_threshold": str(webhook_data.low_stock_threshold),
@@ -1516,10 +1508,6 @@ async def update_webhook_settings(
             "default_team_seat_limit": str(webhook_data.default_team_seat_limit),
             "auto_reinvite_enabled": str(webhook_data.auto_reinvite_enabled).lower(),
             "auto_reinvite_interval_seconds": str(webhook_data.auto_reinvite_interval_seconds),
-            "auto_status_refresh_enabled": str(webhook_data.auto_status_refresh_enabled).lower(),
-            "auto_status_refresh_start_time": webhook_data.auto_status_refresh_start_time.strip(),
-            "auto_status_refresh_interval_hours": str(webhook_data.auto_status_refresh_interval_hours),
-            "auto_status_refresh_last_slot": "",
         }
 
         success = await settings_service.update_settings(db, settings)
@@ -1537,4 +1525,57 @@ async def update_webhook_settings(
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"success": False, "error": f"更新失败: {str(e)}"}
+        )
+
+
+@router.post("/settings/team-refresh")
+async def update_team_refresh_settings(
+    refresh_data: TeamRefreshSettingsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    """更新 Team 自动刷新设置"""
+    try:
+        from app.services.settings import settings_service
+
+        logger.info(
+            "管理员更新 Team 自动刷新配置: enabled=%s, start_time=%s, interval_hours=%s",
+            refresh_data.auto_status_refresh_enabled,
+            refresh_data.auto_status_refresh_start_time,
+            refresh_data.auto_status_refresh_interval_hours,
+        )
+
+        if not _is_valid_hhmm(refresh_data.auto_status_refresh_start_time):
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "账号状态自动刷新时间格式错误，请使用 HH:MM"},
+            )
+
+        if refresh_data.auto_status_refresh_interval_hours < 1 or refresh_data.auto_status_refresh_interval_hours > 24:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "账号状态自动刷新周期必须在 1-24 小时之间"},
+            )
+
+        settings = {
+            "auto_status_refresh_enabled": str(refresh_data.auto_status_refresh_enabled).lower(),
+            "auto_status_refresh_start_time": refresh_data.auto_status_refresh_start_time.strip(),
+            "auto_status_refresh_interval_hours": str(refresh_data.auto_status_refresh_interval_hours),
+            "auto_status_refresh_last_slot": "",
+        }
+
+        success = await settings_service.update_settings(db, settings)
+
+        if success:
+            return JSONResponse(content={"success": True, "message": "Team 自动刷新配置已保存"})
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": "保存失败"},
+        )
+    except Exception as e:
+        logger.error(f"更新 Team 自动刷新配置失败: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": f"更新失败: {str(e)}"},
         )
