@@ -26,7 +26,7 @@ class AdminWorkspaceTemplateTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("Code Workspace", html)
+        self.assertIn(">库存<", html)
         self.assertIn("兑换码管理", html)
         self.assertIn("workspace-pills", html)
         self.assertIn("package-open", html)
@@ -45,7 +45,7 @@ class AdminWorkspaceTemplateTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("Records Workspace", html)
+        self.assertIn(">记录<", html)
         self.assertIn("使用记录", html)
         self.assertIn("workspace-pills", html)
         self.assertIn("clipboard-list", html)

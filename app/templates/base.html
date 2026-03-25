@@ -14,78 +14,106 @@
 
 <body class="bg-gray-50 text-slate-900">
     {% if user %}
-    <!-- 导航栏 -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <div class="navbar-left">
-                <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-                    <i data-lucide="menu"></i>
-                </button>
-                <div class="navbar-brand">
-                    <h1>GPT Team 管理系统</h1>
+    <div class="app-shell">
+        <header class="navbar">
+            <div class="navbar-container">
+                <div class="navbar-left">
+                    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="navbar-brand">
+                        <p class="navbar-kicker">Workspace</p>
+                        <h1>GPT Team 管理系统</h1>
+                    </div>
+                </div>
+                <div class="navbar-menu">
+                    <div class="navbar-identity">
+                        <span class="navbar-user">管理员</span>
+                        <small class="navbar-subtitle">后台工作台</small>
+                    </div>
+                    <button onclick="logout()" class="btn btn-secondary">登出</button>
                 </div>
             </div>
-            <div class="navbar-menu">
-                <span class="navbar-user">管理员</span>
-                <button onclick="logout()" class="btn btn-secondary">登出</button>
-            </div>
+        </header>
+
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <div class="main-container">
+            <aside class="sidebar" id="adminSidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-mark" aria-hidden="true"></div>
+                    <div>
+                        <p class="sidebar-kicker">Navigation</p>
+                        <strong class="sidebar-title">管理工作区</strong>
+                    </div>
+                </div>
+
+                <ul class="sidebar-menu">
+                    <li class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                        <a href="/admin">
+                            <span class="menu-icon" data-lucide="layout-dashboard"></span>
+                            <span class="menu-copy">
+                                <span class="menu-text">控制台</span>
+                                <small>总览与批量处理</small>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if active_page == 'codes' %}active{% endif %}">
+                        <a href="/admin/codes">
+                            <span class="menu-icon" data-lucide="ticket"></span>
+                            <span class="menu-copy">
+                                <span class="menu-text">兑换码管理</span>
+                                <small>库存与质保配置</small>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if active_page == 'auto_reinvite' %}active{% endif %}">
+                        <a href="/admin/auto-reinvite">
+                            <span class="menu-icon" data-lucide="refresh-cw"></span>
+                            <span class="menu-copy">
+                                <span class="menu-text">自动补邀</span>
+                                <small>规则与最近执行</small>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if active_page == 'records' %}active{% endif %}">
+                        <a href="/admin/records">
+                            <span class="menu-icon" data-lucide="file-text"></span>
+                            <span class="menu-copy">
+                                <span class="menu-text">使用记录</span>
+                                <small>检索与撤回记录</small>
+                            </span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% if active_page == 'settings' %}active{% endif %}">
+                        <a href="/admin/settings">
+                            <span class="menu-icon" data-lucide="settings"></span>
+                            <span class="menu-copy">
+                                <span class="menu-text">系统设置</span>
+                                <small>代理、通知与刷新</small>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="sidebar-footer">
+                    <p>保持数据、库存与自动化任务在同一工作面内。</p>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="page-stage">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
         </div>
-    </nav>
-
-    <!-- 移动端侧边栏遮罩 -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-    <!-- 主容器 -->
-    <div class="main-container">
-        <!-- 侧边栏 -->
-        <aside class="sidebar" id="adminSidebar">
-            <ul class="sidebar-menu">
-                <li class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
-                    <a href="/admin">
-                        <span class="menu-icon" data-lucide="layout-dashboard"></span>
-                        <span class="menu-text">控制台</span>
-                    </a>
-                </li>
-                <li class="menu-item {% if active_page == 'codes' %}active{% endif %}">
-                    <a href="/admin/codes">
-                        <span class="menu-icon" data-lucide="ticket"></span>
-                        <span class="menu-text">兑换码管理</span>
-                    </a>
-                </li>
-                <li class="menu-item {% if active_page == 'auto_reinvite' %}active{% endif %}">
-                    <a href="/admin/auto-reinvite">
-                        <span class="menu-icon" data-lucide="refresh-cw"></span>
-                        <span class="menu-text">自动补邀</span>
-                    </a>
-                </li>
-                <li class="menu-item {% if active_page == 'records' %}active{% endif %}">
-                    <a href="/admin/records">
-                        <span class="menu-icon" data-lucide="file-text"></span>
-                        <span class="menu-text">使用记录</span>
-                    </a>
-                </li>
-                <li class="menu-item {% if active_page == 'settings' %}active{% endif %}">
-                    <a href="/admin/settings">
-                        <span class="menu-icon" data-lucide="settings"></span>
-                        <span class="menu-text">系统设置</span>
-                    </a>
-                </li>
-            </ul>
-        </aside>
-
-        <!-- 主内容区 -->
-        <main class="main-content">
-            {% block content %}{% endblock %}
-        </main>
     </div>
     {% else %}
-    <!-- 未登录时的内容 -->
     <div class="auth-container">
         {% block auth_content %}{% endblock %}
     </div>
     {% endif %}
 
-    <!-- 页脚 -->
     <footer class="footer">
         <p>&copy; 2026 <a href="https://github.com/CoolXun2111/team-manage-Remake" target="_blank" class="footer-link">GPT Team
                 管理系统</a> v0.1.0</p>

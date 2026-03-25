@@ -59,9 +59,9 @@
 body {
     font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
     background:
-        radial-gradient(980px 520px at 0% -10%, rgba(10, 132, 255, 0.12), transparent 62%),
-        radial-gradient(860px 480px at 100% 0%, rgba(94, 92, 230, 0.08), transparent 58%),
-        var(--bg-main);
+        radial-gradient(1080px 620px at -8% -8%, rgba(10, 132, 255, 0.14), transparent 62%),
+        radial-gradient(900px 560px at 108% 0%, rgba(94, 92, 230, 0.12), transparent 58%),
+        linear-gradient(180deg, #edf2ff 0%, #f3f5fb 18%, var(--bg-main) 48%);
     color: var(--text-main);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -86,15 +86,19 @@ body {
 }
 
 /* Layout */
+.app-shell {
+    min-height: calc(100vh - 72px);
+}
+
 .navbar {
-    background: rgba(255, 255, 255, 0.72);
-    border-bottom: 1px solid var(--border-base);
-    backdrop-filter: blur(18px) saturate(170%);
-    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    background: rgba(255, 255, 255, 0.64);
+    border-bottom: 1px solid rgba(214, 214, 219, 0.82);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
     position: sticky;
     top: 0;
     z-index: 50;
-    height: 64px;
+    height: 72px;
     display: flex;
     align-items: center;
 }
@@ -103,17 +107,43 @@ body {
     max-width: 1520px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1.35rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.navbar-kicker {
+    margin: 0 0 0.14rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #7b7d86;
+}
+
 .navbar-brand h1 {
-    font-size: 1.25rem;
+    font-size: 1.18rem;
     font-weight: 700;
     color: var(--text-main);
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
+}
+
+.navbar-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.navbar-identity {
+    display: grid;
+    justify-items: end;
+    gap: 0.08rem;
+}
+
+.navbar-subtitle {
+    color: var(--text-dim);
+    font-size: 0.74rem;
 }
 
 .main-container {
@@ -121,75 +151,157 @@ body {
     max-width: 1520px;
     margin: 0 auto;
     width: 100%;
+    padding: 1rem 1rem 0;
 }
 
 .sidebar {
-    width: 260px;
+    width: 286px;
     flex-shrink: 0;
     padding: 1rem;
-    margin: 1rem 0 1rem 1rem;
-    border: 1px solid var(--border-base);
-    border-radius: 22px;
-    height: calc(100vh - 96px);
+    margin: 0;
+    border: 1px solid rgba(214, 214, 219, 0.86);
+    border-radius: 30px;
+    height: calc(100vh - 102px);
     position: sticky;
-    top: 64px;
-    background: rgba(255, 255, 255, 0.68);
-    backdrop-filter: blur(16px) saturate(165%);
-    -webkit-backdrop-filter: blur(16px) saturate(165%);
+    top: 86px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(249, 249, 252, 0.78) 100%);
+    backdrop-filter: blur(18px) saturate(168%);
+    -webkit-backdrop-filter: blur(18px) saturate(168%);
     box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.2rem 0.2rem 0.35rem;
+}
+
+.sidebar-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0) 42%),
+        linear-gradient(135deg, rgba(10, 132, 255, 0.92), rgba(94, 92, 230, 0.88));
+}
+
+.sidebar-kicker {
+    margin: 0 0 0.14rem;
+    color: var(--text-dim);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.sidebar-title {
+    font-size: 0.98rem;
+    letter-spacing: -0.01em;
 }
 
 .sidebar-menu {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.42rem;
 }
 
 .menu-item a {
     display: flex;
-    align-items: center;
-    padding: 0.72rem 0.88rem;
+    align-items: flex-start;
+    gap: 0.82rem;
+    padding: 0.82rem 0.9rem;
     color: var(--text-muted);
     text-decoration: none;
-    border-radius: var(--radius-md);
+    border-radius: 20px;
     transition: var(--transition-base);
-    white-space: nowrap;
     font-weight: 500;
+    border: 1px solid transparent;
 }
 
 .menu-item a:hover {
-    background-color: rgba(120, 120, 128, 0.12);
+    background-color: rgba(255, 255, 255, 0.72);
+    border-color: rgba(214, 214, 219, 0.78);
     color: var(--text-main);
+    transform: translateY(-1px);
 }
 
 .menu-item.active a {
-    background-color: rgba(10, 132, 255, 0.16);
-    color: var(--primary);
+    background: linear-gradient(180deg, rgba(10, 132, 255, 0.14) 0%, rgba(94, 92, 230, 0.1) 100%);
+    color: var(--text-main);
+    border-color: rgba(10, 132, 255, 0.22);
+    box-shadow: 0 14px 24px rgba(10, 132, 255, 0.08);
 }
 
 .menu-icon {
-    margin-right: 0.875rem;
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: rgba(120, 120, 128, 0.1);
+    flex-shrink: 0;
+}
+
+.menu-copy {
+    display: grid;
+    gap: 0.14rem;
+}
+
+.menu-text {
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.menu-copy small {
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+.menu-item.active .menu-icon {
+    color: var(--primary);
+    background: rgba(10, 132, 255, 0.14);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 0.8rem 0.25rem 0;
+    border-top: 1px solid rgba(214, 214, 219, 0.75);
+}
+
+.sidebar-footer p {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.76rem;
+    line-height: 1.55;
 }
 
 .main-content {
     flex: 1;
     min-width: 0;
-    /* Allow content to shrink and trigger scrolling */
-    padding: 1.5rem 2rem 2rem;
+    padding: 0 0 0 1rem;
     background-color: transparent;
-    min-height: calc(100vh - 64px);
+    min-height: calc(100vh - 72px);
+}
+
+.page-stage {
+    display: grid;
+    gap: 1.2rem;
+    padding: 0.25rem 0 2rem;
 }
 
 .footer {
-    padding: 2rem;
+    padding: 1.2rem 2rem 2rem;
     text-align: center;
     color: var(--text-muted);
     font-size: 0.875rem;
-    border-top: 1px solid var(--border-base);
-    background-color: var(--bg-surface);
+    background-color: transparent;
 }
 
 .footer-link {
@@ -208,10 +320,10 @@ body {
 .content-section {
     background: var(--bg-surface);
     border: 1px solid var(--border-base);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem;
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 1.25rem;
+    border-radius: 24px;
+    padding: 1.4rem;
+    box-shadow: 0 16px 28px rgba(28, 28, 30, 0.05);
+    margin-bottom: 0;
     animation: fadeInUp var(--transition-base) forwards;
     position: relative;
     z-index: 1;
@@ -1396,23 +1508,107 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--bg-main);
+    background:
+        radial-gradient(840px 520px at 15% 0%, rgba(10, 132, 255, 0.14), transparent 58%),
+        radial-gradient(760px 460px at 100% 20%, rgba(94, 92, 230, 0.12), transparent 54%),
+        linear-gradient(180deg, #eef2ff 0%, #f5f7fb 48%, #f2f2f7 100%);
 }
 
 .login-box {
-    background-color: var(--bg-surface);
-    padding: 2.5rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    background: rgba(255, 255, 255, 0.86);
+    padding: 2.35rem;
+    border-radius: 28px;
+    box-shadow: 0 24px 48px rgba(28, 28, 30, 0.12);
+    border: 1px solid rgba(214, 214, 219, 0.88);
+    backdrop-filter: blur(18px) saturate(165%);
+    -webkit-backdrop-filter: blur(18px) saturate(165%);
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
 }
 
 .login-box h2 {
-    text-align: center;
-    margin-bottom: 2rem;
+    text-align: left;
+    margin-bottom: 0.4rem;
     font-weight: 800;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
+}
+
+.login-shell {
+    width: 100%;
+    max-width: 980px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(360px, 420px);
+    gap: 2rem;
+    align-items: center;
+    padding: 1.5rem;
+}
+
+.login-intro {
+    display: grid;
+    gap: 0.95rem;
+}
+
+.login-kicker {
+    margin: 0;
+    color: #6f6f78;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.login-intro h1 {
+    margin: 0;
+    font-size: clamp(2.6rem, 5vw, 4.2rem);
+    line-height: 0.96;
+    letter-spacing: -0.06em;
+}
+
+.login-intro p {
+    margin: 0;
+    max-width: 42ch;
+    color: #5f6368;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.login-points {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 0.45rem;
+}
+
+.login-points span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a4f56;
+    font-size: 0.9rem;
+}
+
+.login-points i {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+
+.login-subtitle {
+    margin: 0 0 1.35rem;
+    color: var(--text-muted);
+}
+
+.login-box .btn-block {
+    width: 100%;
+}
+
+.error-message {
+    margin-bottom: 0.9rem;
+    padding: 0.78rem 0.92rem;
+    border-radius: 14px;
+    background: rgba(255, 69, 58, 0.08);
+    border: 1px solid rgba(255, 69, 58, 0.16);
+    color: #b42318;
+    font-size: 0.84rem;
 }
 
 /* Utilities */
@@ -1433,7 +1629,7 @@ body {
 /* Mobile Responsiveness */
 @media (max-width: 1024px) {
     .main-content {
-        padding: 1.5rem 2rem;
+        padding: 0 0 0 0.8rem;
     }
 }
 
@@ -1509,7 +1705,11 @@ body {
     }
 
     .main-content {
-        padding: 1rem;
+        padding: 0;
+    }
+
+    .page-stage {
+        padding: 0 0 1.2rem;
     }
 
     .section-header {
@@ -1562,6 +1762,10 @@ body {
         display: none;
     }
 
+    .navbar-subtitle {
+        display: none;
+    }
+
     .navbar-brand h1 {
         font-size: 1.1rem;
     }
@@ -1574,6 +1778,16 @@ body {
 
     .modal-overlay {
         padding: 0;
+    }
+
+    .login-shell {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .login-intro h1 {
+        font-size: 2.35rem;
     }
 
     /* Bulk Action Bar Mobile */

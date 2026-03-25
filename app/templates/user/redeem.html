@@ -12,9 +12,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <p class="header-kicker">Redeem Workspace</p>
+            <p class="header-kicker">兑换入口</p>
             <h1>GPT Team 兑换中心</h1>
-            <p class="subtitle">输入邮箱与兑换码，系统会自动为你分配可用 Team 并发送邀请。</p>
+            <p class="subtitle">输入邮箱与兑换码后，系统会自动分配可用 Team 并发送邀请。</p>
 
             <div class="header-meta">
                 {% if remaining_spots is not none %}
@@ -30,8 +30,8 @@
             </div>
 
             <div class="header-tips">
-                <span><i data-lucide="mail-check"></i> 邀请将发送至填写邮箱</span>
-                <span><i data-lucide="shield-check"></i> 质保码支持自助修复</span>
+                <span><i data-lucide="mail-check"></i> 邀请发送到填写邮箱</span>
+                <span><i data-lucide="shield-check"></i> 质保码支持自助处理</span>
             </div>
 
             {% if after_sales_group_url %}
@@ -55,7 +55,7 @@
                 <div class="card card-group">
                     <div class="form-intro">
                         <h2>输入兑换信息</h2>
-                        <p>提交后系统会自动匹配可用 Team 并发送邀请邮件。</p>
+                        <p>提交后自动匹配可用 Team。</p>
                     </div>
                     <form id="verifyForm">
                         <div class="form-group">
@@ -82,7 +82,7 @@
                             质保查询
                         </h3>
                         <p class="form-help warranty-help">
-                            如果您使用质保兑换码加入的 Team 被封号，可以在质保期内重复使用原兑换码查询状态并进行处理。
+                            质保兑换码对应的 Team 失效后，可在质保期内查询并处理。
                         </p>
                         <div class="form-group warranty-input-group">
                             <input type="text" id="warrantyInput" placeholder="请输入原兑换码或邮箱进行查询" class="form-input">
