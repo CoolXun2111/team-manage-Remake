@@ -184,6 +184,14 @@
                         <p class="form-help">用于兑换页售后按钮主文案，未填写时默认显示“售后群入口”。</p>
                     </div>
 
+                    <div class="form-group">
+                        <label for="afterSalesGroupSubtitle">售后群副标题文案</label>
+                        <input type="text" id="afterSalesGroupSubtitle" name="after_sales_group_subtitle"
+                            value="{{ after_sales_group_subtitle or '兑换后遇到问题，可直接进群联系售后处理' }}"
+                            placeholder="兑换后遇到问题，可直接进群联系售后处理" class="form-control">
+                        <p class="form-help">用于兑换页售后按钮下方说明，未填写时会回退到默认提示文案。</p>
+                    </div>
+
                     <div class="settings-actions">
                         <button type="submit" class="btn btn-primary">保存 Webhook 与售后入口</button>
                     </div>
@@ -730,6 +738,7 @@
         const api_key = document.getElementById('apiKey').value.trim();
         const after_sales_group_url = document.getElementById('afterSalesGroupUrl').value.trim();
         const after_sales_group_text = document.getElementById('afterSalesGroupText').value.trim();
+        const after_sales_group_subtitle = document.getElementById('afterSalesGroupSubtitle').value.trim();
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
@@ -742,7 +751,8 @@
                 low_stock_threshold,
                 api_key,
                 after_sales_group_url,
-                after_sales_group_text
+                after_sales_group_text,
+                after_sales_group_subtitle
             });
 
             if (response.ok && data.success) {
