@@ -40,6 +40,49 @@ class TeamService:
         )
         return max(1, min(default_limit, 100))
 
+    def _normalize_device_auth_error(
+        self,
+        error: Optional[str],
+        *,
+        error_code: Optional[str] = None,
+        team: Optional[Team] = None,
+    ) -> Dict[str, str]:
+        """将设备身份验证相关错误转换为更明确的中文提示。"""
+        raw_error = str(error or "").strip()
+        lowered_error = raw_error.lower()
+        lowered_code = str(error_code or "").lower()
+        plan_name = (
+            getattr(team, "subscription_plan", None)
+            or getattr(team, "plan_type", None)
+            or "当前套餐"
+        )
+
+        if "workspace plan required" in lowered_error or lowered_code == "workspace_plan_required":
+            return {
+                "error": (
+                    f"开启设备身份验证失败：当前 Team 套餐（{plan_name}）不支持该能力。"
+                    "OpenAI 返回要求 Workspace plan，通常需要支持该功能的工作区/套餐后才能开启。"
+                ),
+                "error_code": "workspace_plan_required",
+            }
+
+        if "feature_not_found" in lowered_error or "unknown beta feature" in lowered_error:
+            return {
+                "error": "开启设备身份验证失败：当前 OpenAI 侧未开放该功能开关，暂时无法为这个 Team 启用。",
+                "error_code": "device_auth_feature_unavailable",
+            }
+
+        if "forbidden" in lowered_error or lowered_code == "forbidden":
+            return {
+                "error": "开启设备身份验证失败：当前账号没有权限修改这个 Team 的设备身份验证设置。",
+                "error_code": "device_auth_forbidden",
+            }
+
+        return {
+            "error": f"开启设备身份验证失败: {raw_error or '未知错误'}",
+            "error_code": error_code or "device_auth_failed",
+        }
+
     async def _handle_api_error(self, result: Dict[str, Any], team: Team, db_session: AsyncSession) -> bool:
         """
         检查结果是否表示账号被封禁、Token 失效或 Team 已满,如果是则更新状态
@@ -1686,7 +1729,12 @@ class TeamService:
             )
 
             if not result["success"]:
-                return {"success": False, "error": f"开启设备身份验证失败: {result.get('error', '未知错误')}"}
+                normalized_error = self._normalize_device_auth_error(
+                    result.get("error"),
+                    error_code=result.get("error_code"),
+                    team=team,
+                )
+                return {"success": False, **normalized_error}
 
             # 更新数据库状态
             team.device_code_auth_enabled = True
