@@ -6,8 +6,8 @@
 
 ### 一键部署
 ```bash
-git clone https://github.com/tibbar213/team-manage.git
-cd team-manage
+git clone https://github.com/CoolXun2111/team-manage-Remake.git
+cd team-manage-Remake
 cp .env.example .env
 docker compose up -d
 ```
@@ -82,8 +82,8 @@ git pull && docker compose down && docker compose up -d --build
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/tibbar213/team-manage.git
-cd team-manage
+git clone https://github.com/CoolXun2111/team-manage-Remake.git
+cd team-manage-Remake
 ```
 
 ### 2. 创建虚拟环境
@@ -209,7 +209,7 @@ docker compose build --no-cache
 ## 📁 项目结构
 
 ```
-team-manage/
+team-manage-Remake/
 ├── app/                        # 应用主目录
 │   ├── main.py                 # FastAPI 入口文件
 │   ├── config.py               # 配置管理
