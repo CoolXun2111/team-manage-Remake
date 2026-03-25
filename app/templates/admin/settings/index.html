@@ -8,44 +8,39 @@
     <header class="settings-section-header">
         <p class="settings-section-kicker">Automation</p>
         <h2>自动补邀</h2>
-        <p class="settings-section-lead">在这里集中管理补邀规则、执行频率和最近一次执行结果。</p>
+        <p class="settings-section-lead">设置规则并查看最近一次执行。</p>
     </header>
     {% else %}
     <header class="settings-section-header">
-        <p class="settings-section-kicker">Control Center</p>
+        <p class="settings-section-kicker">Settings</p>
         <h2>系统设置</h2>
-        <p class="settings-section-lead">代理、密码、日志、Webhook、售后支持、默认席位、自动补邀和 Team 自动刷新都集中放在这里。</p>
+        <p class="settings-section-lead">按模块独立保存。</p>
     </header>
-
-    <div class="settings-topbar">
-        <span class="settings-topbar-label">独立保存</span>
-        <p>当前页所有模块均为单独保存；修改售后、默认席位或自动补邀时不会互相覆盖。</p>
-    </div>
 
     <div class="settings-tabs" role="tablist" aria-label="系统设置导航">
         <button type="button" class="settings-tab is-active" data-panel="panel-proxy" role="tab" aria-selected="true">
-            代理配置
+            代理
         </button>
         <button type="button" class="settings-tab" data-panel="panel-password" role="tab" aria-selected="false">
-            修改密码
+            密码
         </button>
         <button type="button" class="settings-tab" data-panel="panel-log" role="tab" aria-selected="false">
-            日志级别
+            日志
         </button>
         <button type="button" class="settings-tab" data-panel="panel-webhook" role="tab" aria-selected="false">
             Webhook
         </button>
         <button type="button" class="settings-tab" data-panel="panel-after-sales" role="tab" aria-selected="false">
-            售后支持
+            售后
         </button>
         <button type="button" class="settings-tab" data-panel="panel-team-default" role="tab" aria-selected="false">
-            默认席位
+            席位
         </button>
         <button type="button" class="settings-tab" data-panel="panel-auto-reinvite" role="tab" aria-selected="false">
-            自动补邀
+            补邀
         </button>
         <button type="button" class="settings-tab" data-panel="panel-team-refresh" role="tab" aria-selected="false">
-            Team 自动刷新
+            刷新
         </button>
     </div>
     {% endif %}
@@ -57,7 +52,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>代理配置</h3>
-                            <p>为系统内所有 OpenAI / ChatGPT 请求统一指定出网代理，适合固定线路、转发网关或海外网络环境。</p>
+                            <p>统一设置系统请求的出网代理。</p>
                         </div>
                     </div>
 
@@ -66,14 +61,14 @@
                             <input type="checkbox" id="proxyEnabled" name="enabled" {% if proxy_enabled %}checked{% endif %}>
                             <span>启用代理</span>
                         </label>
-                        <p class="form-help">开启后，后台同步、拉成员、补邀和兑换相关请求都会统一经过代理。</p>
+                        <p class="form-help">开启后相关请求统一走代理。</p>
                     </div>
 
                     <div class="form-group">
                         <label for="proxyUrl">代理地址</label>
                         <input type="text" id="proxyUrl" name="proxy" value="{{ proxy or '' }}"
                             placeholder="http://127.0.0.1:7890 或 socks5://127.0.0.1:1080" class="form-control">
-                        <p class="form-help">支持 `http://`、`https://`、`socks5://` 和 `socks5h://`，留空表示直连。</p>
+                        <p class="form-help">支持 `http://`、`https://`、`socks5://`，留空直连。</p>
                     </div>
 
                     <div class="settings-actions">
@@ -89,7 +84,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>修改密码</h3>
-                            <p>修改后台管理员登录密码。保存成功后，当前会话会自动回到登录页重新验证。</p>
+                            <p>修改管理员登录密码。</p>
                         </div>
                     </div>
 
@@ -111,8 +106,6 @@
                             class="form-control" placeholder="请再次输入新密码">
                     </div>
 
-                    <p class="form-help">建议使用和旧密码不同的组合，避免连续数字、重复字符或过于简单的弱密码。</p>
-
                     <div class="settings-actions">
                         <button type="submit" class="btn btn-primary">保存新密码</button>
                     </div>
@@ -126,7 +119,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>日志级别</h3>
-                            <p>控制后台日志的详细程度。日常运行建议保持 `INFO`，排查问题时再临时切到 `DEBUG`。</p>
+                            <p>控制后台日志详细程度。</p>
                         </div>
                     </div>
 
@@ -139,7 +132,7 @@
                             <option value="ERROR" {% if log_level == 'ERROR' %}selected{% endif %}>ERROR</option>
                             <option value="CRITICAL" {% if log_level == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
                         </select>
-                        <p class="form-help">日志越详细，排查越方便，但输出也会更多；生产环境通常不建议长期保持 `DEBUG`。</p>
+                        <p class="form-help">常用 `INFO`，排障时再切 `DEBUG`。</p>
                     </div>
 
                     <div class="settings-actions">
@@ -155,7 +148,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>Webhook 通知</h3>
-                            <p>当可用总席位低于阈值时，自动向外部补货或监控系统发送通知；可同时传递 API Key。</p>
+                            <p>库存不足时推送到外部系统。</p>
                         </div>
                     </div>
 
@@ -163,7 +156,7 @@
                         <label for="webhookUrl">Webhook URL</label>
                         <input type="text" id="webhookUrl" name="webhook_url" value="{{ webhook_url or '' }}"
                             placeholder="https://your-api.com/webhook" class="form-control">
-                        <p class="form-help">留空则不发送外部通知；填入后会在库存告警时向该地址推送请求。</p>
+                        <p class="form-help">留空则不推送。</p>
                     </div>
 
                     <div class="settings-form-split">
@@ -171,14 +164,14 @@
                             <label for="lowStockThreshold">库存预警阈值</label>
                             <input type="number" id="lowStockThreshold" name="low_stock_threshold"
                                 value="{{ low_stock_threshold or '10' }}" min="0" class="form-control">
-                            <p class="form-help">剩余可用总席位小于或等于该值时触发告警。</p>
+                            <p class="form-help">剩余席位小于等于该值时触发。</p>
                         </div>
 
                         <div class="form-group">
                             <label for="apiKey">API Key</label>
                             <input type="text" id="apiKey" name="api_key" value="{{ api_key or '' }}"
                                 placeholder="外部系统调用时使用的 X-API-Key" class="form-control">
-                            <p class="form-help">如外部接口需要鉴权，可在这里填写并随通知一并传递。</p>
+                            <p class="form-help">外部接口需要鉴权时填写。</p>
                         </div>
                     </div>
 
@@ -194,8 +187,8 @@
                 <article class="settings-card settings-card-wide">
                     <div class="settings-card-header">
                         <div>
-                            <h3>售后支持入口</h3>
-                            <p>控制兑换首页和兑换成功页的售后入口，支持单独配置链接、主文案和副标题说明。</p>
+                            <h3>售后支持</h3>
+                            <p>配置前台售后入口的链接与文案。</p>
                         </div>
                     </div>
 
@@ -204,7 +197,7 @@
                         <input type="text" id="afterSalesGroupUrl" name="after_sales_group_url"
                             value="{{ after_sales_group_url or '' }}" placeholder="https://t.me/your_support_group"
                             class="form-control">
-                        <p class="form-help">配置后，兑换首页和兑换成功页都会显示售后入口；留空则前台自动隐藏。</p>
+                        <p class="form-help">留空则前台隐藏。</p>
                     </div>
 
                     <div class="settings-form-split">
@@ -213,7 +206,7 @@
                             <input type="text" id="afterSalesGroupText" name="after_sales_group_text"
                                 value="{{ after_sales_group_text or '售后群入口' }}" placeholder="售后群入口"
                                 class="form-control">
-                            <p class="form-help">例如“联系客服群”“售后处理通道”；留空时默认显示“售后群入口”。</p>
+                            <p class="form-help">留空则使用默认文案。</p>
                         </div>
 
                         <div class="form-group">
@@ -221,12 +214,12 @@
                             <input type="text" id="afterSalesGroupSubtitle" name="after_sales_group_subtitle"
                                 value="{{ after_sales_group_subtitle or '兑换后遇到问题，可直接进群联系售后处理' }}"
                                 placeholder="兑换后遇到问题，可直接进群联系售后处理" class="form-control">
-                            <p class="form-help">用于补充说明入口用途；留空时会回退到默认说明文案。</p>
+                            <p class="form-help">用于补充说明；留空则使用默认文案。</p>
                         </div>
                     </div>
 
                     <div class="settings-preview">
-                        <span class="settings-preview-label">预览</span>
+                        <span class="settings-preview-label">前台预览</span>
                         <div class="settings-preview-entry">
                             <div class="settings-preview-icon">
                                 <svg viewBox="0 0 24 24" fill="none">
@@ -253,15 +246,15 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>Team 默认席位</h3>
-                            <p>控制新导入母号时默认可分配的席位上限；单个 Team 仍然可以在编辑弹窗里单独覆盖。</p>
+                            <p>设置新导入 Team 的默认席位上限。</p>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="defaultTeamSeatLimit">新 Team 默认席位上限</label>
+                        <label for="defaultTeamSeatLimit">默认席位上限</label>
                         <input type="number" id="defaultTeamSeatLimit" name="default_team_seat_limit"
                             value="{{ default_team_seat_limit or '6' }}" min="1" max="100" class="form-control">
-                        <p class="form-help">这里只影响后续新导入的母号；已存在的 Team 不会被自动改写。</p>
+                        <p class="form-help">仅影响后续新导入的 Team。</p>
                     </div>
 
                     <div class="settings-actions">
@@ -278,7 +271,7 @@
                         <div class="settings-card-header">
                             <div>
                                 <h3>自动补邀规则</h3>
-                                <p>当质保子号所在 Team 已封禁时，系统会按规则尝试重新补邀，避免仍在有效 Team 中的账号被重复处理。</p>
+                                <p>Team 失效后，按规则尝试重新补邀。</p>
                             </div>
                         </div>
 
@@ -288,7 +281,7 @@
                                     {% if auto_reinvite_enabled == 'true' %}checked{% endif %}>
                                 <span>启用自动补邀</span>
                             </label>
-                            <p class="form-help">开启后只会处理符合规则的质保子号，不会把母号邮箱或仍在正常 Team 中的账号重复补邀。</p>
+                            <p class="form-help">仅处理符合规则的质保子号。</p>
                         </div>
 
                         <div class="settings-form-split">
@@ -296,14 +289,14 @@
                                 <label for="autoReinviteStartTime">扫描开始时间</label>
                                 <input type="time" id="autoReinviteStartTime" name="auto_reinvite_start_time"
                                     value="{{ auto_reinvite_start_time or '00:00' }}" class="form-control">
-                                <p class="form-help">首轮从这个时间点开始，之后按扫描周期循环执行。</p>
+                                <p class="form-help">从该时间开始按周期执行。</p>
                             </div>
 
                             <div class="form-group">
                                 <label for="autoReinviteIntervalMinutes">扫描周期（分钟）</label>
                                 <input type="number" id="autoReinviteIntervalMinutes" name="auto_reinvite_interval_minutes"
                                     value="{{ auto_reinvite_interval_minutes or '5' }}" min="1" max="1440" class="form-control">
-                                <p class="form-help">支持 1-1440 分钟，适合按固定节奏补邀。</p>
+                                <p class="form-help">范围 1-1440 分钟。</p>
                             </div>
                         </div>
 
@@ -312,32 +305,30 @@
                                 <label for="autoReinviteBatchSize">单轮处理账号数</label>
                                 <input type="number" id="autoReinviteBatchSize" name="auto_reinvite_batch_size"
                                     value="{{ auto_reinvite_batch_size or '20' }}" min="1" max="500" class="form-control">
-                                <p class="form-help">限制每轮最多处理多少个账号，避免一次性扫完整库导致请求过大。</p>
+                                <p class="form-help">限制单轮处理上限。</p>
                             </div>
 
                             <div class="form-group">
                                 <label for="autoReinviteConcurrency">自动补邀并发数</label>
                                 <input type="number" id="autoReinviteConcurrency" name="auto_reinvite_concurrency"
                                     value="{{ auto_reinvite_concurrency or '1' }}" min="1" max="20" class="form-control">
-                                <p class="form-help">控制同一时间并发处理多少个账号；数值越高，处理越快，但请求压力也更大。</p>
+                                <p class="form-help">数值越高，处理越快。</p>
                             </div>
                         </div>
 
                         <div class="settings-note">
                             <span class="settings-note-label">执行规则</span>
                             <ul class="settings-list settings-rule-list">
-                                <li>只处理拥有质保兑换码的子号邮箱。</li>
-                                <li>只看该邮箱最新一条兑换记录，避免旧记录反复补邀。</li>
-                                <li>最新记录对应的 Team 必须已封禁；正常、已满或仅异常状态不会触发。</li>
-                                <li>如果该邮箱已经在新的正常 Team 中，系统会自动跳过。</li>
-                                <li>母号邮箱和来源母号邮箱会自动跳过，不参与补邀。</li>
-                                <li>每个时间槽只执行一次，超出单轮处理上限的账号会顺延到下一轮。</li>
+                                <li>仅处理质保子号邮箱。</li>
+                                <li>只读取该邮箱最新兑换记录。</li>
+                                <li>源 Team 必须已封禁。</li>
+                                <li>已在正常 Team 中的账号会自动跳过。</li>
                             </ul>
                         </div>
 
                         <div class="settings-note">
-                            <span class="settings-note-label">质保起算</span>
-                            <p>质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。</p>
+                            <span class="settings-note-label">说明</span>
+                            <p>质保从首次成功使用开始计算，后续补邀不重置。</p>
                         </div>
 
                         <div class="settings-actions settings-actions-inline">
@@ -351,7 +342,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>最近一次执行结果</h3>
-                            <p>展示最近一次手动执行、定时扫描或封号触发的补邀结果。</p>
+                            <p>查看最近一次补邀结果。</p>
                         </div>
                         <span class="settings-status-pill{% if not auto_reinvite_last_result %} is-hidden{% endif %}" id="autoReinviteStatusPill">{% if auto_reinvite_last_result %}{{ auto_reinvite_last_result.trigger_source_label }}{% endif %}</span>
                     </div>
@@ -418,7 +409,7 @@
                         {% else %}
                         <div class="settings-empty-state">
                             <strong>还没有执行记录</strong>
-                            <p>你可以先保存补邀规则，或直接点“立即执行一次补邀”查看当前候选与处理结果。</p>
+                            <p>保存规则后，或直接手动执行一次。</p>
                         </div>
                         {% endif %}
                     </div>
@@ -432,7 +423,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>Team 自动刷新</h3>
-                            <p>按设定时间和周期自动刷新 Team 状态、席位和到期信息，适合夜间或固定节奏巡检。</p>
+                            <p>按周期刷新 Team 状态与席位信息。</p>
                         </div>
                     </div>
 
@@ -442,7 +433,7 @@
                                 {% if auto_status_refresh_enabled == 'true' %}checked{% endif %}>
                             <span>启用账号状态自动刷新</span>
                         </label>
-                        <p class="form-help">系统会按计划自动同步非封禁 Team 的账号状态、席位和到期信息。</p>
+                        <p class="form-help">仅处理非封禁 Team。</p>
                     </div>
 
                     <div class="settings-form-split">
@@ -450,14 +441,14 @@
                             <label for="autoStatusRefreshStartTime">自动刷新时间</label>
                             <input type="time" id="autoStatusRefreshStartTime" name="auto_status_refresh_start_time"
                                 value="{{ auto_status_refresh_start_time or '03:00' }}" class="form-control">
-                            <p class="form-help">这是首轮执行时间，之后按刷新周期循环运行。</p>
+                            <p class="form-help">从该时间开始按周期执行。</p>
                         </div>
 
                         <div class="form-group">
                             <label for="autoStatusRefreshIntervalHours">刷新周期（小时）</label>
                             <input type="number" id="autoStatusRefreshIntervalHours" name="auto_status_refresh_interval_hours"
                                 value="{{ auto_status_refresh_interval_hours or '24' }}" min="1" max="24" class="form-control">
-                            <p class="form-help">支持 1-24 小时。</p>
+                            <p class="form-help">范围 1-24 小时。</p>
                         </div>
                     </div>
 
@@ -470,17 +461,14 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>执行规则</h3>
-                            <p>当前自动刷新任务的实际行为说明，方便你按资源和频率做平衡。</p>
+                            <p>当前自动刷新策略。</p>
                         </div>
                     </div>
 
                     <ul class="settings-list">
-                        <li>仅同步非封禁 Team，避免对已失效母号做无意义请求。</li>
-                        <li>会优先刷新异常/过期账号，其次已满账号，最后刷新正常账号。</li>
-                        <li>单轮默认并发 3 个 Team，同步执行但受并发上限控制。</li>
-                        <li>每轮会刷新账号状态、席位人数和到期信息，沿用现有同步逻辑。</li>
-                        <li>修改时间或周期后，会从新的时间槽重新开始计算执行计划。</li>
-                        <li>如果你设置为 03:00 且周期 6 小时，则会在 03:00、09:00、15:00、21:00 运行。</li>
+                        <li>仅同步非封禁 Team。</li>
+                        <li>异常/过期账号优先刷新。</li>
+                        <li>修改时间或周期后按新计划执行。</li>
                     </ul>
                 </article>
             </form>
@@ -545,47 +533,12 @@
         align-items: start;
     }
 
-    .settings-topbar {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 18px;
-        border-radius: 20px;
-        background: linear-gradient(180deg, #f4f6ff 0%, #eef2ff 100%);
-        border: 1px solid #dfe5ff;
-        box-shadow: 0 12px 24px rgba(104, 116, 206, 0.08);
-    }
-
-    .settings-topbar-label {
-        flex: 0 0 auto;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 78px;
-        height: 34px;
-        padding: 0 14px;
-        border-radius: 999px;
-        background: rgba(106, 111, 247, 0.12);
-        color: var(--settings-accent);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }
-
-    .settings-topbar p {
-        margin: 0;
-        color: var(--settings-muted);
-        font-size: 13px;
-        line-height: 1.7;
-    }
-
     .settings-tabs {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
         overflow-x: auto;
-        padding-bottom: 4px;
+        padding-bottom: 2px;
         scrollbar-width: none;
     }
 
@@ -596,11 +549,11 @@
     .settings-tab {
         flex: 0 0 auto;
         border: 1px solid var(--settings-border);
-        border-radius: 18px;
-        padding: 11px 18px;
+        border-radius: 16px;
+        padding: 10px 15px;
         background: var(--settings-accent-soft-2);
         color: var(--settings-muted);
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease, background 0.18s ease;
     }
@@ -645,13 +598,13 @@
 
     .settings-form-grid {
         display: grid;
-        gap: 16px;
+        gap: 14px;
     }
 
     .settings-card {
         border: 1px solid var(--settings-border);
-        border-radius: 24px;
-        padding: 24px;
+        border-radius: 22px;
+        padding: 20px;
         background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
         box-shadow: var(--settings-shadow);
     }
@@ -669,20 +622,20 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 18px;
+        margin-bottom: 14px;
     }
 
     .settings-card-header h3 {
         margin: 0;
-        font-size: 22px;
+        font-size: 20px;
         color: var(--settings-text);
     }
 
     .settings-card-header p {
-        margin: 8px 0 0;
+        margin: 6px 0 0;
         color: var(--settings-muted);
-        line-height: 1.7;
-        font-size: 14px;
+        line-height: 1.6;
+        font-size: 13px;
     }
 
     .settings-status-pill {
@@ -741,8 +694,8 @@
     .form-help {
         margin: 0;
         color: var(--settings-muted);
-        font-size: 13px;
-        line-height: 1.7;
+        font-size: 12px;
+        line-height: 1.55;
     }
 
     .checkbox-label {
@@ -759,16 +712,16 @@
     }
 
     .settings-note {
-        border-radius: 18px;
-        padding: 16px 18px;
-        background: linear-gradient(180deg, #eef1ff 0%, #f6f7ff 100%);
-        border: 1px solid #dbe2ff;
+        border-radius: 16px;
+        padding: 14px 15px;
+        background: linear-gradient(180deg, #f3f5ff 0%, #f8f9ff 100%);
+        border: 1px solid #e1e6ff;
     }
 
     .settings-note-label {
         display: inline-block;
-        margin-bottom: 8px;
-        font-size: 12px;
+        margin-bottom: 6px;
+        font-size: 11px;
         font-weight: 800;
         letter-spacing: 0.12em;
         text-transform: uppercase;
@@ -778,21 +731,21 @@
     .settings-note p {
         margin: 0;
         color: var(--settings-text);
-        line-height: 1.7;
+        line-height: 1.6;
     }
 
     .settings-preview {
         display: grid;
-        gap: 10px;
+        gap: 8px;
         margin-top: 4px;
-        padding: 16px;
-        border-radius: 20px;
-        background: linear-gradient(180deg, #f4f6ff 0%, #eef1ff 100%);
-        border: 1px dashed #cdd6ff;
+        padding: 14px;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #f7f8ff 0%, #f1f4ff 100%);
+        border: 1px dashed #d9def9;
     }
 
     .settings-preview-label {
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 800;
         letter-spacing: 0.12em;
         text-transform: uppercase;
@@ -802,9 +755,9 @@
     .settings-preview-entry {
         display: flex;
         align-items: center;
-        gap: 14px;
-        padding: 14px 16px;
-        border-radius: 18px;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(106, 111, 247, 0.12);
     }
@@ -902,41 +855,41 @@
 
     .settings-result-card {
         display: grid;
-        gap: 16px;
+        gap: 14px;
     }
 
     .settings-result-meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 10px 16px;
+        gap: 8px 14px;
         color: var(--settings-muted);
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .settings-result-stats {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
+        gap: 10px;
     }
 
     .settings-stat-tile {
         display: grid;
         gap: 4px;
-        padding: 14px;
-        border-radius: 18px;
+        padding: 12px;
+        border-radius: 16px;
         background: linear-gradient(180deg, #f6f8ff 0%, #eef2ff 100%);
         border: 1px solid #dfe5ff;
     }
 
     .settings-stat-tile strong {
         color: var(--settings-text);
-        font-size: 20px;
+        font-size: 18px;
         line-height: 1;
     }
 
     .settings-stat-tile span {
         color: var(--settings-muted);
-        font-size: 12px;
+        font-size: 11px;
         line-height: 1.5;
     }
 
@@ -946,15 +899,15 @@
 
     .settings-result-list {
         display: grid;
-        gap: 10px;
+        gap: 8px;
     }
 
     .settings-result-item {
         display: flex;
         justify-content: space-between;
-        gap: 14px;
-        padding: 14px 16px;
-        border-radius: 18px;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
         background: #f9faff;
         border: 1px solid #e3e8ff;
     }
@@ -975,15 +928,15 @@
     .settings-result-item span,
     .settings-result-item small {
         color: var(--settings-muted);
-        font-size: 12px;
+        font-size: 11px;
         line-height: 1.55;
     }
 
     .settings-empty-state {
         display: grid;
         gap: 8px;
-        padding: 18px;
-        border-radius: 18px;
+        padding: 16px;
+        border-radius: 16px;
         background: linear-gradient(180deg, #f7f9ff 0%, #eff3ff 100%);
         border: 1px dashed #d8defd;
     }
@@ -1018,11 +971,6 @@
 
         .settings-section-header h2 {
             font-size: 24px;
-        }
-
-        .settings-topbar {
-            flex-direction: column;
-            align-items: flex-start;
         }
 
         .settings-tab {
@@ -1109,7 +1057,7 @@
             container.innerHTML = `
                 <div class="settings-empty-state">
                     <strong>还没有执行记录</strong>
-                    <p>你可以先保存补邀规则，或直接点“立即执行一次补邀”查看当前候选与处理结果。</p>
+                    <p>保存规则后，或直接手动执行一次。</p>
                 </div>
             `;
             return;

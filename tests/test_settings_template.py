@@ -58,7 +58,7 @@ class SettingsTemplateTests(unittest.TestCase):
     def test_renders_topbar_without_legacy_hero(self):
         html = self.render_settings()
 
-        self.assertIn('class="settings-topbar"', html)
+        self.assertNotIn('class="settings-topbar"', html)
         self.assertNotIn("settings-hero-pill", html)
         self.assertNotIn("Automation Center", html)
         self.assertIn('data-panel="panel-after-sales"', html)
@@ -66,6 +66,8 @@ class SettingsTemplateTests(unittest.TestCase):
         self.assertIn('href="/admin/auto-reinvite"', html)
         self.assertIn("自动补邀规则", html)
         self.assertIn(">系统设置<", html)
+        self.assertIn("按模块独立保存。", html)
+        self.assertNotIn("当前页所有模块均为单独保存", html)
 
     def test_renders_auto_reinvite_rule_list(self):
         html = self.render_settings()
