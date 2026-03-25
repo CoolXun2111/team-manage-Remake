@@ -103,7 +103,7 @@ async def admin_dashboard(
     管理员面板首页
     """
     try:
-        from app.main import templates
+        from app.main import render_template_response
         logger.info(f"管理员访问控制台, search={search}, page={page}, per_page={per_page}")
 
         # 设置每页数量
@@ -124,7 +124,7 @@ async def admin_dashboard(
             "used_codes": code_stats["used"]
         }
 
-        return templates.TemplateResponse(
+        return render_template_response(
             request,
             "admin/index.html",
             {
@@ -708,7 +708,7 @@ async def codes_list_page(
         兑换码列表页面 HTML
     """
     try:
-        from app.main import templates
+        from app.main import render_template_response
 
         logger.info(f"管理员访问兑换码列表页面, search={search}, status={status_filter}, per_page={per_page}")
 
@@ -740,7 +740,7 @@ async def codes_list_page(
                 dt = datetime.fromisoformat(code["used_at"])
                 code["used_at"] = dt.strftime("%Y-%m-%d %H:%M")
 
-        return templates.TemplateResponse(
+        return render_template_response(
             request,
             "admin/codes/index.html",
             {
@@ -1096,7 +1096,7 @@ async def records_page(
         使用记录页面 HTML
     """
     try:
-        from app.main import templates
+        from app.main import render_template_response
         from datetime import datetime, timedelta
         import math
 
@@ -1202,7 +1202,7 @@ async def records_page(
             except:
                 pass
 
-        return templates.TemplateResponse(
+        return render_template_response(
             request,
             "admin/records/index.html",
             {
@@ -1293,7 +1293,7 @@ async def settings_page(
         系统设置页面 HTML
     """
     try:
-        from app.main import templates
+        from app.main import render_template_response
         from app.services.settings import settings_service
 
         logger.info("管理员访问系统设置页面")
@@ -1302,7 +1302,7 @@ async def settings_page(
         proxy_config = await settings_service.get_proxy_config(db)
         log_level = await settings_service.get_log_level(db)
 
-        return templates.TemplateResponse(
+        return render_template_response(
             request,
             "admin/settings/index.html",
             {

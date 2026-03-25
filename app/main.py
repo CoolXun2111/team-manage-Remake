@@ -100,6 +100,23 @@ app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="stati
 # 配置模板引擎
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 
+
+def render_template_response(
+    request: Request,
+    name: str,
+    context: dict | None = None,
+    status_code: int = 200,
+) -> HTMLResponse:
+    """稳定渲染模板，规避不同 Starlette 版本的 TemplateResponse 签名差异。"""
+    template_context = dict(context or {})
+    template_context.setdefault("request", request)
+
+    for context_processor in templates.context_processors:
+        template_context.update(context_processor(request))
+
+    content = templates.get_template(name).render(template_context)
+    return HTMLResponse(content=content, status_code=status_code)
+
 # 添加模板过滤器
 def format_datetime(dt):
     """格式化日期时间"""
@@ -153,7 +170,7 @@ app.include_router(api.router)
 @app.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """登录页面"""
-    return templates.TemplateResponse(
+    return render_template_response(
         request,
         "auth/login.html",
         {"request": request, "user": None}

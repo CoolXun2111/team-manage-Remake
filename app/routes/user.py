@@ -32,7 +32,7 @@ async def redeem_page(
         用户兑换页面 HTML
     """
     try:
-        from app.main import templates
+        from app.main import render_template_response
         from app.services.team import TeamService
         
         team_service = TeamService()
@@ -40,7 +40,7 @@ async def redeem_page(
 
         logger.info(f"用户访问兑换页面，剩余车位: {remaining_spots}")
 
-        return templates.TemplateResponse(
+        return render_template_response(
             request,
             "user/redeem.html",
             {
