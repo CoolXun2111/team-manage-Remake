@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class AutoReinviteService:
     """失效母号自动补邀服务。"""
+    ELIGIBLE_SOURCE_STATUSES = {"banned"}
 
     def __init__(self) -> None:
         self._task: Optional[asyncio.Task] = None
@@ -24,6 +25,48 @@ class AutoReinviteService:
     @staticmethod
     def _normalize_email(email: Optional[str]) -> str:
         return (email or "").strip().lower()
+
+    def _classify_candidate(
+        self,
+        record: RedemptionRecord,
+        code: RedemptionCode,
+        team: Team,
+        parent_emails: set[str],
+    ) -> Dict[str, Any]:
+        child_email = self._normalize_email(getattr(record, "email", None))
+        if not child_email:
+            return {"eligible": False, "reason": "missing_child_email"}
+
+        source_team_email = self._normalize_email(getattr(team, "email", None))
+        if child_email in parent_emails or child_email == source_team_email:
+            return {
+                "eligible": False,
+                "reason": "parent_or_source_email",
+                "child_email": child_email,
+                "source_team_email": source_team_email,
+            }
+
+        if not getattr(code, "has_warranty", False):
+            return {"eligible": False, "reason": "non_warranty_code"}
+
+        source_status = str(getattr(team, "status", "") or "").strip().lower()
+        if source_status not in self.ELIGIBLE_SOURCE_STATUSES:
+            return {
+                "eligible": False,
+                "reason": "source_team_not_reinviteable",
+                "source_status": source_status or "unknown",
+            }
+
+        return {
+            "eligible": True,
+            "candidate": {
+                "code": code.code,
+                "email": record.email,
+                "source_team_id": team.id,
+                "source_team_email": team.email,
+                "source_team_status": team.status,
+            },
+        }
 
     async def start(self) -> None:
         """启动后台巡检任务。"""
@@ -160,30 +203,28 @@ class AutoReinviteService:
                 continue
             seen_emails.add(child_email)
 
-            source_team_email = self._normalize_email(team.email)
-            if child_email in parent_emails or child_email == source_team_email:
+            decision = self._classify_candidate(record, code, team, parent_emails)
+            if not decision.get("eligible"):
+                if decision.get("reason") == "parent_or_source_email":
+                    logger.info(
+                        "自动补邀跳过母号邮箱: code=%s email=%s source_team=%s",
+                        code.code,
+                        decision.get("child_email", child_email),
+                        team.id,
+                    )
+                continue
+
+            candidate = decision.get("candidate")
+            if not candidate:
                 logger.info(
-                    "自动补邀跳过母号邮箱: code=%s email=%s source_team=%s",
+                    "自动补邀跳过异常候选: code=%s email=%s source_team=%s",
                     code.code,
                     child_email,
                     team.id,
                 )
                 continue
 
-            if not code.has_warranty:
-                continue
-
-            if team.status != "banned":
-                continue
-
-            candidates.append(
-                {
-                    "code": code.code,
-                    "email": record.email,
-                    "source_team_id": team.id,
-                    "source_team_email": team.email,
-                }
-            )
+            candidates.append(candidate)
 
         return candidates
 

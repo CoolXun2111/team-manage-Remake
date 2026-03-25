@@ -1566,7 +1566,7 @@ async def update_after_sales_settings(
         success = await settings_service.update_settings(db, settings)
 
         if success:
-            return JSONResponse(content={"success": True, "message": "售后配置已保存"})
+            return JSONResponse(content={"success": True, "message": "售后支持设置已保存"})
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -1608,7 +1608,7 @@ async def update_team_default_settings(
         )
 
         if success:
-            return JSONResponse(content={"success": True, "message": "Team 默认限制已保存"})
+            return JSONResponse(content={"success": True, "message": "默认席位已保存"})
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -1654,7 +1654,7 @@ async def update_auto_reinvite_settings(
         )
 
         if success:
-            return JSONResponse(content={"success": True, "message": "自动补邀配置已保存"})
+            return JSONResponse(content={"success": True, "message": "自动补邀规则已保存"})
 
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -12,9 +12,9 @@ class DummyRequest:
 
 
 class SettingsTemplateTests(unittest.TestCase):
-    def test_renders_after_sales_panel(self):
+    def render_settings(self) -> str:
         request = DummyRequest()
-        html = templates.get_template("admin/settings/index.html").render(
+        return templates.get_template("admin/settings/index.html").render(
             {
                 "request": request,
                 "user": {"username": "admin"},
@@ -26,8 +26,8 @@ class SettingsTemplateTests(unittest.TestCase):
                 "low_stock_threshold": "10",
                 "api_key": "",
                 "after_sales_group_url": "https://t.me/example_support",
-                "after_sales_group_text": "联系客服群",
-                "after_sales_group_subtitle": "有问题可进群联系售后",
+                "after_sales_group_text": "Support Group",
+                "after_sales_group_subtitle": "Join the support group if needed",
                 "default_team_seat_limit": "6",
                 "auto_reinvite_enabled": "false",
                 "auto_reinvite_interval_seconds": "300",
@@ -37,9 +37,19 @@ class SettingsTemplateTests(unittest.TestCase):
             }
         )
 
-        self.assertIn("panel-after-sales", html)
-        self.assertIn('id="afterSalesForm"', html)
-        self.assertIn("联系客服群", html)
+    def test_renders_topbar_without_legacy_hero(self):
+        html = self.render_settings()
+
+        self.assertIn('class="settings-topbar"', html)
+        self.assertNotIn("settings-hero-pill", html)
+        self.assertIn('data-panel="panel-after-sales"', html)
+
+    def test_renders_auto_reinvite_rule_list(self):
+        html = self.render_settings()
+
+        self.assertIn('id="autoReinviteForm"', html)
+        self.assertIn('class="settings-list settings-rule-list"', html)
+        self.assertIn("panel-auto-reinvite", html)
 
 
 if __name__ == "__main__":
