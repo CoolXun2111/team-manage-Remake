@@ -59,8 +59,10 @@ class SettingsTemplateTests(unittest.TestCase):
 
         self.assertIn('class="settings-topbar"', html)
         self.assertNotIn("settings-hero-pill", html)
+        self.assertNotIn("Automation Center", html)
         self.assertIn('data-panel="panel-after-sales"', html)
-        self.assertIn(">自动补邀<", html)
+        self.assertIn('data-panel="panel-auto-reinvite"', html)
+        self.assertIn("自动补邀规则", html)
         self.assertIn(">系统设置<", html)
 
     def test_renders_auto_reinvite_rule_list(self):
@@ -68,7 +70,7 @@ class SettingsTemplateTests(unittest.TestCase):
 
         self.assertIn('id="autoReinviteForm"', html)
         self.assertIn('class="settings-list settings-rule-list"', html)
-        self.assertNotIn('data-panel="panel-auto-reinvite"', html)
+        self.assertIn('id="panel-auto-reinvite"', html)
         self.assertIn('id="autoReinviteStartTime"', html)
         self.assertIn('id="autoReinviteIntervalMinutes"', html)
         self.assertIn('id="autoReinviteBatchSize"', html)
