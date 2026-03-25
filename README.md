@@ -112,6 +112,8 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
+如需和旧版项目同时运行，可在 `.env` 中修改 `CONTAINER_NAME`，默认值为 `team-manage-remake-app`。
+
 编辑 `.env` 文件：
 
 ```env

@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: team-manage-app
+    container_name: ${CONTAINER_NAME:-team-manage-remake-app}
     ports:
       - "${APP_PORT:-8008}:${APP_PORT:-8008}"
     volumes:
