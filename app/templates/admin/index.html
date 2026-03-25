@@ -3,12 +3,29 @@
 {% block title %}控制台 - GPT Team 管理系统{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>控制台</h2>
-</div>
+<section class="content-section dashboard-hero">
+    <div class="dashboard-hero-main">
+        <p class="dashboard-kicker">Operations Workspace</p>
+        <h2>控制台</h2>
+        <p class="dashboard-summary">集中查看 Team 健康、库存与兑换进度，快速筛选并完成批量处理。</p>
+        <div class="dashboard-summary-pills">
+            <span><i data-lucide="activity"></i> 状态可视化</span>
+            <span><i data-lucide="zap"></i> 批量执行</span>
+            <span><i data-lucide="shield-check"></i> 风险预警</span>
+        </div>
+    </div>
+    <div class="dashboard-hero-actions">
+        <a href="/admin/auto-reinvite" class="btn btn-secondary">
+            <i data-lucide="refresh-cw" style="width: 15px; height: 15px;"></i> 自动补邀
+        </a>
+        <a href="/admin/settings#panel-team-refresh" class="btn btn-secondary">
+            <i data-lucide="clock-3" style="width: 15px; height: 15px;"></i> Team 自动刷新
+        </a>
+    </div>
+</section>
 
 <!-- 统计卡片 -->
-<div class="stats-container">
+<div class="stats-container dashboard-stats">
     <div class="stat-card">
         <div class="stat-icon"><i data-lucide="users"></i></div>
         <div class="stat-info-group">
@@ -40,10 +57,10 @@
 </div>
 
 <!-- Team 列表 -->
-<div class="content-section">
+<div class="content-section dashboard-workspace">
     <div class="section-header">
         <h3>Team 列表</h3>
-        <div class="header-group">
+        <div class="header-group dashboard-toolbar">
             <!-- 批量操作 -->
             <div id="batchActions" class="batch-actions-group" style="display: none;">
                 <button onclick="handleBatchRefresh()" class="btn btn-secondary btn-sm">
@@ -96,7 +113,7 @@
             </div>
 
             <!-- 搜索框 -->
-            <form action="/admin" method="get" class="search-form">
+            <form action="/admin" method="get" class="search-form dashboard-search">
                 <div class="input-group-clean">
                     <i data-lucide="search" style="width: 14px; height: 14px;"></i>
                     <input type="text" name="search" value="{{ search or '' }}" placeholder="搜索邮箱/Account ID..."
@@ -130,7 +147,7 @@
 </div>
 
 {% if teams %}
-<div class="table-container">
+<div class="table-container dashboard-table">
     <table class="data-table">
         <thead>
             <tr>
@@ -399,6 +416,147 @@
 {% endblock %}
 
 {% block extra_css %}
+<style>
+    .dashboard-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1.5rem;
+        padding: 1.4rem 1.5rem;
+        background:
+            radial-gradient(620px 260px at 0% 0%, rgba(99, 102, 241, 0.12), transparent 60%),
+            linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+        border-color: #dbe2ff;
+        box-shadow: 0 14px 28px rgba(79, 92, 189, 0.08);
+    }
+
+    .dashboard-hero-main {
+        display: grid;
+        gap: 0.55rem;
+    }
+
+    .dashboard-kicker {
+        margin: 0;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #7c86c3;
+    }
+
+    .dashboard-hero h2 {
+        margin: 0;
+        font-size: 2rem;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        color: #2b3568;
+    }
+
+    .dashboard-summary {
+        margin: 0;
+        max-width: 62ch;
+        color: #6976a3;
+    }
+
+    .dashboard-summary-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.15rem;
+    }
+
+    .dashboard-summary-pills span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.32rem 0.68rem;
+        border-radius: 999px;
+        background: #f1f4ff;
+        color: #5966a8;
+        border: 1px solid #d9e0ff;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .dashboard-summary-pills i {
+        width: 14px;
+        height: 14px;
+        color: #5a62f0;
+    }
+
+    .dashboard-hero-actions {
+        display: flex;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+    }
+
+    .dashboard-hero-actions .btn {
+        border-color: #d8dffb;
+        background: #ffffff;
+    }
+
+    .dashboard-stats .stat-card {
+        border-color: #dbe2ff;
+        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+    }
+
+    .dashboard-stats .stat-card .stat-icon {
+        box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.12);
+    }
+
+    .dashboard-stats .stat-card .stat-value {
+        font-size: 1.65rem;
+    }
+
+    .dashboard-workspace .section-header h3 {
+        margin: 0;
+        font-size: 1.24rem;
+        color: #2d376b;
+        letter-spacing: -0.01em;
+    }
+
+    .dashboard-toolbar {
+        row-gap: 0.65rem;
+    }
+
+    .dashboard-search .input-group-clean {
+        min-width: 220px;
+    }
+
+    .dashboard-table {
+        border-color: #dbe2ff;
+        box-shadow: 0 12px 24px rgba(78, 95, 188, 0.06);
+    }
+
+    .dashboard-table .data-table th {
+        background: #f9faff;
+        color: #6673a3;
+    }
+
+    .dashboard-table .data-table tbody tr td {
+        background: #ffffff;
+    }
+
+    .dashboard-table .data-table tbody tr:hover td {
+        background: #f7f9ff;
+    }
+
+    @media (max-width: 900px) {
+        .dashboard-hero {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.15rem;
+        }
+
+        .dashboard-hero h2 {
+            font-size: 1.7rem;
+        }
+
+        .dashboard-search .input-group-clean {
+            min-width: 100%;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}

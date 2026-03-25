@@ -12,14 +12,27 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>GPT Team 兑换</h1>
-            <p class="subtitle">使用兑换码加入 ChatGPT Team</p>
-            {% if remaining_spots is not none %}
-            <div class="spots-badge">
-                <i data-lucide="users"></i>
-                <span>剩余车位: {{ remaining_spots }}</span>
+            <p class="header-kicker">Redeem Workspace</p>
+            <h1>GPT Team 兑换中心</h1>
+            <p class="subtitle">输入邮箱与兑换码，系统会自动为你分配可用 Team 并发送邀请。</p>
+
+            <div class="header-meta">
+                {% if remaining_spots is not none %}
+                <div class="spots-badge">
+                    <i data-lucide="users"></i>
+                    <span>剩余车位 {{ remaining_spots }}</span>
+                </div>
+                {% endif %}
+                <div class="spots-badge spots-badge-neutral">
+                    <i data-lucide="clock-3"></i>
+                    <span>通常 30 秒内完成</span>
+                </div>
             </div>
-            {% endif %}
+
+            <div class="header-tips">
+                <span><i data-lucide="mail-check"></i> 邀请将发送至填写邮箱</span>
+                <span><i data-lucide="shield-check"></i> 质保码支持自助修复</span>
+            </div>
 
             {% if after_sales_group_url %}
             <a class="support-entry" href="{{ after_sales_group_url }}" target="_blank" rel="noopener noreferrer">
@@ -39,7 +52,10 @@
 
         <div id="step1" class="step active">
             <div class="card">
-                <h2>输入兑换信息</h2>
+                <div class="form-intro">
+                    <h2>输入兑换信息</h2>
+                    <p>提交后系统会自动匹配可用 Team。若当前 Team 失效，可在下方质保区快速处理。</p>
+                </div>
                 <form id="verifyForm">
                     <div class="form-group">
                         <label for="email">邮箱地址</label>
