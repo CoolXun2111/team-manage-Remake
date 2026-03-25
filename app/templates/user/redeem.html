@@ -51,42 +51,46 @@
         </div>
 
         <div id="step1" class="step active">
-            <div class="card">
-                <div class="form-intro">
-                    <h2>输入兑换信息</h2>
-                    <p>提交后系统会自动匹配可用 Team。若当前 Team 失效，可在下方质保区快速处理。</p>
+            <div class="step-stack">
+                <div class="card card-group">
+                    <div class="form-intro">
+                        <h2>输入兑换信息</h2>
+                        <p>提交后系统会自动匹配可用 Team 并发送邀请邮件。</p>
+                    </div>
+                    <form id="verifyForm">
+                        <div class="form-group">
+                            <label for="email">邮箱地址</label>
+                            <input type="email" id="email" name="email" required placeholder="请输入您的邮箱地址" class="form-input">
+                            <p class="form-help">请填写您要接收邀请的账号邮箱，邀请会发送到此邮箱。</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="code">兑换码</label>
+                            <input type="text" id="code" name="code" required placeholder="请输入兑换码" class="form-input">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="verifyBtn">
+                            <i data-lucide="shield-check"></i> 验证兑换码
+                        </button>
+                    </form>
                 </div>
-                <form id="verifyForm">
-                    <div class="form-group">
-                        <label for="email">邮箱地址</label>
-                        <input type="email" id="email" name="email" required placeholder="请输入您的邮箱地址" class="form-input">
-                        <p class="form-help">请填写您要接收邀请的账号邮箱，邀请会发送到此邮箱。</p>
-                    </div>
 
-                    <div class="form-group">
-                        <label for="code">兑换码</label>
-                        <input type="text" id="code" name="code" required placeholder="请输入兑换码" class="form-input">
+                <div class="card card-group warranty-card">
+                    <div class="warranty-section">
+                        <h3>
+                            <i data-lucide="shield"></i>
+                            质保查询
+                        </h3>
+                        <p class="form-help warranty-help">
+                            如果您使用质保兑换码加入的 Team 被封号，可以在质保期内重复使用原兑换码查询状态并进行处理。
+                        </p>
+                        <div class="form-group warranty-input-group">
+                            <input type="text" id="warrantyInput" placeholder="请输入原兑换码或邮箱进行查询" class="form-input">
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="checkWarrantyBtn" onclick="checkWarranty()">
+                            <i data-lucide="search"></i> 查询质保状态
+                        </button>
                     </div>
-
-                    <button type="submit" class="btn btn-primary" id="verifyBtn">
-                        <i data-lucide="shield-check"></i> 验证兑换码
-                    </button>
-                </form>
-
-                <div class="warranty-section">
-                    <h3>
-                        <i data-lucide="shield"></i>
-                        质保查询
-                    </h3>
-                    <p class="form-help warranty-help">
-                        如果您使用质保兑换码加入的 Team 被封号，可以在质保期内重复使用原兑换码查询状态并进行处理。
-                    </p>
-                    <div class="form-group warranty-input-group">
-                        <input type="text" id="warrantyInput" placeholder="请输入原兑换码或邮箱进行查询" class="form-input">
-                    </div>
-                    <button type="button" class="btn btn-secondary" id="checkWarrantyBtn" onclick="checkWarranty()">
-                        <i data-lucide="search"></i> 查询质保状态
-                    </button>
                 </div>
             </div>
         </div>

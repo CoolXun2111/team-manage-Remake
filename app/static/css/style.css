@@ -1,42 +1,42 @@
 /* White Minimalist & Dynamic Design System */
 :root {
     /* Colors */
-    --primary: #6366f1;
-    --primary-hover: #4f46e5;
-    --primary-soft: #eef2ff;
+    --primary: #0a84ff;
+    --primary-hover: #0077ed;
+    --primary-soft: rgba(10, 132, 255, 0.14);
 
-    --bg-main: #f9fafb;
+    --bg-main: #f2f2f7;
     --bg-surface: #ffffff;
 
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --text-dim: #94a3b8;
+    --text-main: #1c1c1e;
+    --text-muted: #636366;
+    --text-dim: #8e8e93;
 
-    --border-base: #e2e8f0;
-    --border-focus: #6366f1;
+    --border-base: #d6d6db;
+    --border-focus: #0a84ff;
 
-    --success: #10b981;
-    --success-soft: #ecfdf5;
-    --warning: #f59e0b;
-    --warning-soft: #fffbeb;
-    --danger: #ef4444;
-    --danger-soft: #fef2f2;
-    --info: #3b82f6;
-    --info-soft: #eff6ff;
+    --success: #30d158;
+    --success-soft: rgba(48, 209, 88, 0.12);
+    --warning: #ff9f0a;
+    --warning-soft: rgba(255, 159, 10, 0.14);
+    --danger: #ff453a;
+    --danger-soft: rgba(255, 69, 58, 0.12);
+    --info: #0a84ff;
+    --info-soft: rgba(10, 132, 255, 0.12);
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-sm: 0 8px 22px rgba(28, 28, 30, 0.06);
+    --shadow-md: 0 14px 30px rgba(28, 28, 30, 0.09);
+    --shadow-lg: 0 22px 44px rgba(28, 28, 30, 0.12);
 
     /* Transitions */
     --transition-fast: 0.15s ease;
     --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Border Radius */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 16px;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 18px;
     --radius-full: 9999px;
 
     /* Fixed mappings for compatibility */
@@ -57,8 +57,11 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background-color: var(--bg-main);
+    font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background:
+        radial-gradient(980px 520px at 0% -10%, rgba(10, 132, 255, 0.12), transparent 62%),
+        radial-gradient(860px 480px at 100% 0%, rgba(94, 92, 230, 0.08), transparent 58%),
+        var(--bg-main);
     color: var(--text-main);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -84,8 +87,10 @@ body {
 
 /* Layout */
 .navbar {
-    background-color: var(--bg-surface);
+    background: rgba(255, 255, 255, 0.72);
     border-bottom: 1px solid var(--border-base);
+    backdrop-filter: blur(18px) saturate(170%);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
     position: sticky;
     top: 0;
     z-index: 50;
@@ -95,7 +100,7 @@ body {
 }
 
 .navbar-container {
-    max-width: 1440px;
+    max-width: 1520px;
     width: 100%;
     margin: 0 auto;
     padding: 0 2rem;
@@ -113,19 +118,25 @@ body {
 
 .main-container {
     display: flex;
-    max-width: 1440px;
+    max-width: 1520px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .sidebar {
     width: 260px;
     flex-shrink: 0;
-    padding: 2rem 1.5rem;
-    border-right: 1px solid var(--border-base);
-    height: calc(100vh - 64px);
+    padding: 1rem;
+    margin: 1rem 0 1rem 1rem;
+    border: 1px solid var(--border-base);
+    border-radius: 22px;
+    height: calc(100vh - 96px);
     position: sticky;
     top: 64px;
-    background-color: var(--bg-surface);
+    background: rgba(255, 255, 255, 0.68);
+    backdrop-filter: blur(16px) saturate(165%);
+    -webkit-backdrop-filter: blur(16px) saturate(165%);
+    box-shadow: var(--shadow-sm);
 }
 
 .sidebar-menu {
@@ -138,7 +149,7 @@ body {
 .menu-item a {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
+    padding: 0.72rem 0.88rem;
     color: var(--text-muted);
     text-decoration: none;
     border-radius: var(--radius-md);
@@ -148,12 +159,12 @@ body {
 }
 
 .menu-item a:hover {
-    background-color: var(--bg-main);
+    background-color: rgba(120, 120, 128, 0.12);
     color: var(--text-main);
 }
 
 .menu-item.active a {
-    background-color: var(--primary-soft);
+    background-color: rgba(10, 132, 255, 0.16);
     color: var(--primary);
 }
 
@@ -167,8 +178,8 @@ body {
     flex: 1;
     min-width: 0;
     /* Allow content to shrink and trigger scrolling */
-    padding: 2rem 3rem;
-    background-color: var(--bg-main);
+    padding: 1.5rem 2rem 2rem;
+    background-color: transparent;
     min-height: calc(100vh - 64px);
 }
 
@@ -195,12 +206,12 @@ body {
 
 /* Components */
 .content-section {
-    background-color: var(--bg-surface);
+    background: var(--bg-surface);
     border: 1px solid var(--border-base);
     border-radius: var(--radius-lg);
-    padding: 1.5rem;
+    padding: 1.25rem;
     box-shadow: var(--shadow-sm);
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
     animation: fadeInUp var(--transition-base) forwards;
     position: relative;
     z-index: 1;
@@ -213,7 +224,7 @@ body {
 }
 
 .card {
-    background-color: var(--bg-surface);
+    background: var(--bg-surface);
     border: 1px solid var(--border-base);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
@@ -230,7 +241,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.625rem 1.25rem;
+    padding: 0.6rem 1.1rem;
     border-radius: var(--radius-md);
     font-size: 0.875rem;
     font-weight: 600;
@@ -241,24 +252,24 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--primary);
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary-hover) 100%);
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: var(--primary-hover);
+    background: linear-gradient(180deg, var(--primary-hover) 0%, #0064ce 100%);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
-    background-color: var(--bg-surface);
+    background-color: rgba(255, 255, 255, 0.86);
     border-color: var(--border-base);
     color: var(--text-main);
 }
 
 .btn-secondary:hover {
-    background-color: var(--bg-main);
+    background-color: #f9f9fb;
     border-color: var(--text-dim);
 }
 
@@ -1168,6 +1179,10 @@ body {
         box-shadow: var(--shadow-lg);
         width: 280px;
         height: 100vh;
+        margin: 0;
+        border-radius: 0;
+        border: 0;
+        padding: 1.5rem 1rem;
     }
 
     .sidebar.open {
