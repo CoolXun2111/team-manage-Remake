@@ -8,7 +8,7 @@
         <div>
             <p class="settings-kicker">System Settings</p>
             <h2>系统设置</h2>
-            <p class="settings-subtitle">按模块集中管理代理、密码、日志、Webhook、默认席位、自动补邀和 Team 自动刷新。</p>
+            <p class="settings-subtitle">按模块集中管理代理、密码、日志、Webhook、售后入口、默认席位、自动补邀和 Team 自动刷新。</p>
         </div>
     </div>
 
@@ -141,7 +141,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>Webhook 通知</h3>
-                            <p>库存不足时自动通知外部系统，也可同步传递 API Key 供第三方调用。</p>
+                            <p>库存不足时自动通知外部系统，也可同步传递 API Key，并补充前台售后群跳转入口。</p>
                         </div>
                     </div>
 
@@ -168,8 +168,16 @@
                         </div>
                     </div>
 
+                    <div class="form-group">
+                        <label for="afterSalesGroupUrl">售后群链接</label>
+                        <input type="text" id="afterSalesGroupUrl" name="after_sales_group_url"
+                            value="{{ after_sales_group_url or '' }}" placeholder="https://t.me/your_support_group"
+                            class="form-control">
+                        <p class="form-help">配置后，兑换页面会显示“售后群”按钮，用户可直接跳转到售后支持群。</p>
+                    </div>
+
                     <div class="settings-actions">
-                        <button type="submit" class="btn btn-primary">保存 Webhook 通知</button>
+                        <button type="submit" class="btn btn-primary">保存 Webhook 与售后入口</button>
                     </div>
                 </article>
             </form>
@@ -712,6 +720,7 @@
         const webhook_url = document.getElementById('webhookUrl').value.trim();
         const low_stock_threshold = parseInt(document.getElementById('lowStockThreshold').value, 10);
         const api_key = document.getElementById('apiKey').value.trim();
+        const after_sales_group_url = document.getElementById('afterSalesGroupUrl').value.trim();
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
@@ -722,7 +731,8 @@
             const { response, data } = await postJson('/admin/settings/webhook', {
                 webhook_url,
                 low_stock_threshold,
-                api_key
+                api_key,
+                after_sales_group_url
             });
 
             if (response.ok && data.success) {

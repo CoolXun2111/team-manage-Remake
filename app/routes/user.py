@@ -34,9 +34,11 @@ async def redeem_page(
     """
     try:
         from app.services.team import TeamService
-        
+        from app.services.settings import settings_service
+
         team_service = TeamService()
         remaining_spots = await team_service.get_total_available_seats(db)
+        after_sales_group_url = await settings_service.get_setting(db, "after_sales_group_url", "")
 
         logger.info(f"用户访问兑换页面，剩余车位: {remaining_spots}")
 
@@ -45,7 +47,8 @@ async def redeem_page(
             "user/redeem.html",
             {
                 "request": request,
-                "remaining_spots": remaining_spots
+                "remaining_spots": remaining_spots,
+                "after_sales_group_url": after_sales_group_url,
             }
         )
 
