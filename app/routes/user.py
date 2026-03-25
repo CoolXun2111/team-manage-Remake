@@ -7,6 +7,7 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
+from app.webui import render_template_response
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,6 @@ async def redeem_page(
         用户兑换页面 HTML
     """
     try:
-        from app.main import render_template_response
         from app.services.team import TeamService
         
         team_service = TeamService()

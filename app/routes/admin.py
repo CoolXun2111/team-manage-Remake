@@ -4,9 +4,9 @@
 """
 import logging
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 import json
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 
@@ -15,6 +15,7 @@ from app.dependencies.auth import require_admin
 from app.services.team import TeamService
 from app.services.redemption import RedemptionService
 from app.utils.time_utils import get_now
+from app.webui import render_template_response
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +24,6 @@ router = APIRouter(
     prefix="/admin",
     tags=["admin"]
 )
-
-import json
 
 # 服务实例
 team_service = TeamService()
@@ -95,7 +94,7 @@ async def admin_dashboard(
     page: int = 1,
     per_page: int = 20,
     search: Optional[str] = None,
-    status: Optional[str] = None,
+    status_filter: Optional[str] = Query(None, alias="status"),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
@@ -103,14 +102,19 @@ async def admin_dashboard(
     管理员面板首页
     """
     try:
-        from app.main import render_template_response
         logger.info(f"管理员访问控制台, search={search}, page={page}, per_page={per_page}")
 
         # 设置每页数量
         # per_page = 20 (Removed hardcoded value)
         
         # 获取 Team 列表 (分页)
-        teams_result = await team_service.get_all_teams(db, page=page, per_page=per_page, search=search, status=status)
+        teams_result = await team_service.get_all_teams(
+            db,
+            page=page,
+            per_page=per_page,
+            search=search,
+            status=status_filter,
+        )
         
         # 获取统计信息 (使用专用统计方法优化)
         team_stats = await team_service.get_stats(db)
@@ -134,7 +138,7 @@ async def admin_dashboard(
                 "teams": teams_result.get("teams", []),
                 "stats": stats,
                 "search": search,
-                "status_filter": status,
+                "status_filter": status_filter,
                 "pagination": {
                     "current_page": teams_result.get("current_page", page),
                     "total_pages": teams_result.get("total_pages", 1),
@@ -708,8 +712,6 @@ async def codes_list_page(
         兑换码列表页面 HTML
     """
     try:
-        from app.main import render_template_response
-
         logger.info(f"管理员访问兑换码列表页面, search={search}, status={status_filter}, per_page={per_page}")
 
         # 获取兑换码 (分页)
@@ -1096,7 +1098,6 @@ async def records_page(
         使用记录页面 HTML
     """
     try:
-        from app.main import render_template_response
         from datetime import datetime, timedelta
         import math
 
@@ -1293,7 +1294,6 @@ async def settings_page(
         系统设置页面 HTML
     """
     try:
-        from app.main import render_template_response
         from app.services.settings import settings_service
 
         logger.info("管理员访问系统设置页面")
