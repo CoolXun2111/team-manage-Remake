@@ -1279,73 +1279,102 @@ async def withdraw_record(
         )
 
 
+async def _render_settings_page(
+    request: Request,
+    db: AsyncSession,
+    current_user: dict,
+    *,
+    active_page: str = "settings",
+    settings_initial_panel: str = "",
+):
+    from app.services.settings import settings_service
+
+    proxy_config = await settings_service.get_proxy_config(db)
+    log_level = await settings_service.get_log_level(db)
+    auto_reinvite_last_result = _parse_auto_reinvite_result(
+        await settings_service.get_setting(db, "auto_reinvite_last_result", "")
+    )
+
+    return render_template_response(
+        request,
+        "admin/settings/index.html",
+        {
+            "request": request,
+            "user": current_user,
+            "active_page": active_page,
+            "settings_initial_panel": settings_initial_panel,
+            "proxy_enabled": proxy_config["enabled"],
+            "proxy": proxy_config["proxy"],
+            "log_level": log_level,
+            "webhook_url": await settings_service.get_setting(db, "webhook_url", ""),
+            "low_stock_threshold": await settings_service.get_setting(db, "low_stock_threshold", "10"),
+            "api_key": await settings_service.get_setting(db, "api_key", ""),
+            "after_sales_group_url": await settings_service.get_setting(db, "after_sales_group_url", ""),
+            "after_sales_group_text": await settings_service.get_setting(db, "after_sales_group_text", "售后群入口"),
+            "after_sales_group_subtitle": await settings_service.get_setting(
+                db,
+                "after_sales_group_subtitle",
+                "兑换后遇到问题，可直接进群联系售后处理",
+            ),
+            "default_team_seat_limit": await settings_service.get_setting(db, "default_team_seat_limit", "6"),
+            "auto_reinvite_enabled": await settings_service.get_setting(db, "auto_reinvite_enabled", "false"),
+            "auto_reinvite_start_time": await settings_service.get_setting(db, "auto_reinvite_start_time", "00:00"),
+            "auto_reinvite_interval_minutes": await settings_service.get_setting(db, "auto_reinvite_interval_minutes", "5"),
+            "auto_reinvite_batch_size": await settings_service.get_setting(db, "auto_reinvite_batch_size", "20"),
+            "auto_reinvite_concurrency": await settings_service.get_setting(db, "auto_reinvite_concurrency", "1"),
+            "auto_reinvite_last_result": auto_reinvite_last_result,
+            "auto_status_refresh_enabled": await settings_service.get_setting(db, "auto_status_refresh_enabled", "false"),
+            "auto_status_refresh_start_time": await settings_service.get_setting(db, "auto_status_refresh_start_time", "03:00"),
+            "auto_status_refresh_interval_hours": await settings_service.get_setting(db, "auto_status_refresh_interval_hours", "24"),
+        },
+    )
+
+
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(require_admin)
 ):
-    """
-    系统设置页面
-
-    Args:
-        request: FastAPI Request 对象
-        db: 数据库会话
-        current_user: 当前用户（需要登录）
-
-    Returns:
-        系统设置页面 HTML
-    """
+    """系统设置页面。"""
     try:
-        from app.services.settings import settings_service
-
         logger.info("管理员访问系统设置页面")
-
-        # 获取当前配置
-        proxy_config = await settings_service.get_proxy_config(db)
-        log_level = await settings_service.get_log_level(db)
-        auto_reinvite_last_result = _parse_auto_reinvite_result(
-            await settings_service.get_setting(db, "auto_reinvite_last_result", "")
-        )
-
-        return render_template_response(
+        return await _render_settings_page(
             request,
-            "admin/settings/index.html",
-            {
-                "request": request,
-                "user": current_user,
-                "active_page": "settings",
-                "proxy_enabled": proxy_config["enabled"],
-                "proxy": proxy_config["proxy"],
-                "log_level": log_level,
-                "webhook_url": await settings_service.get_setting(db, "webhook_url", ""),
-                "low_stock_threshold": await settings_service.get_setting(db, "low_stock_threshold", "10"),
-                "api_key": await settings_service.get_setting(db, "api_key", ""),
-                "after_sales_group_url": await settings_service.get_setting(db, "after_sales_group_url", ""),
-                "after_sales_group_text": await settings_service.get_setting(db, "after_sales_group_text", "售后群入口"),
-                "after_sales_group_subtitle": await settings_service.get_setting(
-                    db,
-                    "after_sales_group_subtitle",
-                    "兑换后遇到问题，可直接进群联系售后处理",
-                ),
-                "default_team_seat_limit": await settings_service.get_setting(db, "default_team_seat_limit", "6"),
-                "auto_reinvite_enabled": await settings_service.get_setting(db, "auto_reinvite_enabled", "false"),
-                "auto_reinvite_start_time": await settings_service.get_setting(db, "auto_reinvite_start_time", "00:00"),
-                "auto_reinvite_interval_minutes": await settings_service.get_setting(db, "auto_reinvite_interval_minutes", "5"),
-                "auto_reinvite_batch_size": await settings_service.get_setting(db, "auto_reinvite_batch_size", "20"),
-                "auto_reinvite_concurrency": await settings_service.get_setting(db, "auto_reinvite_concurrency", "1"),
-                "auto_reinvite_last_result": auto_reinvite_last_result,
-                "auto_status_refresh_enabled": await settings_service.get_setting(db, "auto_status_refresh_enabled", "false"),
-                "auto_status_refresh_start_time": await settings_service.get_setting(db, "auto_status_refresh_start_time", "03:00"),
-                "auto_status_refresh_interval_hours": await settings_service.get_setting(db, "auto_status_refresh_interval_hours", "24"),
-            }
+            db,
+            current_user,
+            active_page="settings",
+            settings_initial_panel="",
         )
-
     except Exception as e:
         logger.error(f"获取系统设置失败: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"获取系统设置失败: {str(e)}"
+        )
+
+
+@router.get("/auto-reinvite", response_class=HTMLResponse)
+async def auto_reinvite_page(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    """自动补邀页面（系统设置内的自动补邀分栏）。"""
+    try:
+        logger.info("管理员访问自动补邀页面")
+        return await _render_settings_page(
+            request,
+            db,
+            current_user,
+            active_page="auto_reinvite",
+            settings_initial_panel="panel-auto-reinvite",
+        )
+    except Exception as e:
+        logger.error(f"获取自动补邀页面失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取自动补邀页面失败: {str(e)}"
         )
 
 

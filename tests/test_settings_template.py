@@ -12,13 +12,14 @@ class DummyRequest:
 
 
 class SettingsTemplateTests(unittest.TestCase):
-    def render_settings(self) -> str:
+    def render_settings(self, *, active_page: str = "settings", settings_initial_panel: str = "") -> str:
         request = DummyRequest()
         return templates.get_template("admin/settings/index.html").render(
             {
                 "request": request,
                 "user": {"username": "admin"},
-                "active_page": "settings",
+                "active_page": active_page,
+                "settings_initial_panel": settings_initial_panel,
                 "proxy_enabled": False,
                 "proxy": "",
                 "log_level": "INFO",
@@ -62,6 +63,7 @@ class SettingsTemplateTests(unittest.TestCase):
         self.assertNotIn("Automation Center", html)
         self.assertIn('data-panel="panel-after-sales"', html)
         self.assertIn('data-panel="panel-auto-reinvite"', html)
+        self.assertIn('href="/admin/auto-reinvite"', html)
         self.assertIn("自动补邀规则", html)
         self.assertIn(">系统设置<", html)
 
@@ -77,6 +79,13 @@ class SettingsTemplateTests(unittest.TestCase):
         self.assertIn('id="autoReinviteConcurrency"', html)
         self.assertIn('id="runAutoReinviteNow"', html)
         self.assertIn('id="autoReinviteResultContent"', html)
+
+    def test_sidebar_auto_reinvite_is_active_when_page_is_auto_reinvite(self):
+        html = self.render_settings(active_page="auto_reinvite", settings_initial_panel="panel-auto-reinvite")
+
+        self.assertIn('href="/admin/auto-reinvite"', html)
+        self.assertIn('class="menu-item active"', html)
+        self.assertIn("const serverDefaultPanel = 'panel-auto-reinvite';", html)
 
 
 if __name__ == "__main__":

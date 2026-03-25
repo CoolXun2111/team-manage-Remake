@@ -1185,8 +1185,13 @@
     });
 
     (() => {
+        const serverDefaultPanel = '{{ settings_initial_panel or "" }}';
         const hashPanel = window.location.hash.replace('#', '');
         let initialPanel = hashPanel;
+
+        if (!initialPanel && serverDefaultPanel) {
+            initialPanel = serverDefaultPanel;
+        }
 
         if (!initialPanel) {
             try {

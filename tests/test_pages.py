@@ -39,6 +39,16 @@ class PageSmokeTests(unittest.TestCase):
         self.assertEqual(response.status_code, 307)
         self.assertEqual(response.headers.get("location"), "/login")
 
+    def test_auto_reinvite_page_redirects_to_login_when_not_authenticated(self):
+        response = self.client.get(
+            "/admin/auto-reinvite",
+            headers={"accept": "text/html"},
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 307)
+        self.assertEqual(response.headers.get("location"), "/login")
+
 
 if __name__ == "__main__":
     unittest.main()
