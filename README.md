@@ -2,6 +2,8 @@
 
 一个基于 FastAPI 的 ChatGPT Team 账号管理系统，支持管理员批量管理 Team 账号，用户通过兑换码自动加入 Team。
 
+> 部署与更新建议优先参考：[DEPLOYMENT.md](DEPLOYMENT.md)
+
 ## 🚀 Docker 一键部署 & 更新
 
 ### 一键部署
@@ -9,7 +11,8 @@
 git clone https://github.com/CoolXun2111/team-manage-Remake.git
 cd team-manage-Remake
 cp .env.example .env
-docker compose up -d
+mkdir -p data
+docker compose up -d --build
 ```
 
 如果服务器上的旧项目已经占用了 `8008`，请先在 `.env` 中设置：
@@ -21,7 +24,18 @@ CONTAINER_NAME=team-manage-remake-app
 
 ### 一键更新
 ```bash
-git pull && docker compose down && docker compose up -d --build
+# 1) 拉最新代码
+git pull --ff-only origin main
+
+# 2) 备份数据库（建议）
+cp data/team_manage.db "data/team_manage.db.bak.$(date +%F-%H%M%S)"
+
+# 3) 重建并启动
+docker compose up -d --build
+
+# 4) 检查状态与健康
+docker compose ps
+curl http://127.0.0.1:${HOST_PORT:-8008}/health
 ```
 
 ## ✨ 功能特性
@@ -202,7 +216,12 @@ docker compose up -d
 
 ### 3. 数据持久化
 
-Docker 配置中已自动将宿主机的 `team_manage.db` 文件映射到容器内部，因此你的数据会自动保存在项目根目录下，容器删除后数据依然存在。
+Docker 配置中会将宿主机的 `./data` 目录映射到容器 `/app/data`，数据库文件默认在：
+
+- 宿主机：`./data/team_manage.db`
+- 容器：`/app/data/team_manage.db`
+
+因此容器删除后数据仍然保留在宿主机 `data` 目录。
 
 ### 4. 常用命令
 
@@ -357,11 +376,13 @@ team-manage-Remake/
 
 ## 🐛 故障排除
 
+部署相关的完整排障建议见：[DEPLOYMENT.md](DEPLOYMENT.md)
+
 ### 数据库初始化失败
 
 ```bash
-# 删除旧数据库文件
-rm team_manage.db
+# 删除旧数据库文件（按当前配置路径）
+rm -f data/team_manage.db
 
 # 重新初始化
 python init_db.py
