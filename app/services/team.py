@@ -321,6 +321,14 @@ class TeamService:
                         logger.info("导入时通过 refresh_token 成功获取 AT")
 
             if not access_token or not is_at_valid:
+                if refresh_token and not client_id and not session_token:
+                    return {
+                        "success": False,
+                        "team_id": None,
+                        "email": email,
+                        "message": None,
+                        "error": "使用 Refresh Token 导入时缺少 Client ID，请在批量导入框上方填写共享 Client ID，或在每行附带 app_xxx。"
+                    }
                 return {
                     "success": False,
                     "team_id": None,
@@ -712,7 +720,8 @@ class TeamService:
     async def import_team_batch(
         self,
         text: str,
-        db_session: AsyncSession
+        db_session: AsyncSession,
+        shared_client_id: Optional[str] = None
     ):
         """
         批量导入 Team (流式返回进度)
@@ -736,11 +745,14 @@ class TeamService:
                 return
 
             # 1.1 按邮箱去重 (以前是按 AT，现在改为按邮箱，防止重复处理同一个账号)
-            seen_emails = set()
+            seen_keys = set()
             unique_data = []
             for item in parsed_data:
                 token = item.get("token")
                 email = item.get("email")
+                session_token = item.get("session_token")
+                refresh_token = item.get("refresh_token")
+                account_id = item.get("account_id")
                 
                 # 如果没有显式邮箱，尝试从 Token 中提取
                 if not email and token:
@@ -753,10 +765,20 @@ class TeamService:
                         pass
                 
                 # 确定排重键：优先使用邮箱(不区分大小写)，如果没有则退而求其次使用 Token
-                dedup_key = email.lower() if email else token
+                dedup_key = None
+                if email:
+                    dedup_key = email.lower()
+                elif token:
+                    dedup_key = token
+                elif session_token:
+                    dedup_key = session_token
+                elif refresh_token:
+                    dedup_key = refresh_token
+                elif account_id:
+                    dedup_key = account_id.lower()
                 
-                if dedup_key and dedup_key not in seen_emails:
-                    seen_emails.add(dedup_key)
+                if dedup_key and dedup_key not in seen_keys:
+                    seen_keys.add(dedup_key)
                     unique_data.append(item)
             
             parsed_data = unique_data
@@ -771,6 +793,7 @@ class TeamService:
             failed_count = 0
 
             for i, data in enumerate(parsed_data):
+                client_id = data.get("client_id") or shared_client_id
                 result = await self.import_team_single(
                     access_token=data.get("token"),
                     db_session=db_session,
@@ -778,7 +801,7 @@ class TeamService:
                     account_id=data.get("account_id"),
                     refresh_token=data.get("refresh_token"),
                     session_token=data.get("session_token"),
-                    client_id=data.get("client_id")
+                    client_id=client_id
                 )
 
                 if result["success"]:

@@ -187,6 +187,16 @@ async function handleSingleImport(event) {
     submitButton.textContent = '导入中...';
 
     try {
+        if (!accessToken && !refreshToken && !sessionToken) {
+            showToast('请至少填写 Access Token、Refresh Token、Session Token 其中一种', 'error');
+            return;
+        }
+
+        if (!accessToken && refreshToken && !clientId && !sessionToken) {
+            showToast('使用 Refresh Token 单个导入时，请同时填写 Client ID', 'error');
+            return;
+        }
+
         const result = await apiCall('/admin/teams/import', {
             method: 'POST',
             body: JSON.stringify({
@@ -219,6 +229,7 @@ async function handleBatchImport(event) {
     event.preventDefault();
     const form = event.target;
     const batchContent = form.batchContent.value.trim();
+    const batchClientId = form.batchClientId ? form.batchClientId.value.trim() : '';
     const submitButton = form.querySelector('button[type="submit"]');
 
     // UI 元素
@@ -254,7 +265,8 @@ async function handleBatchImport(event) {
             },
             body: JSON.stringify({
                 import_type: 'batch',
-                content: batchContent
+                content: batchContent,
+                batch_client_id: batchClientId || null
             })
         });
 

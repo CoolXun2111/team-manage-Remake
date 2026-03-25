@@ -112,10 +112,10 @@
                 <div id="singleImport" class="import-panel">
                     <form id="singleImportForm" onsubmit="handleSingleImport(event)">
                         <div class="form-group">
-                            <label>Access Token (AT) <span class="required">*</span></label>
+                            <label>Access Token (AT)</label>
                             <input type="text" name="accessToken" class="form-control"
-                                placeholder="eyJhbGciOiJSUzI1Ni..." required>
-                            <small class="form-text">必填项，以 eyJ 开头的 JWT Token</small>
+                                placeholder="eyJhbGciOiJSUzI1Ni...">
+                            <small class="form-text">可选，单个导入支持 AT、RT、Session Token 任意一种；若只填 RT，请同时填写 Client ID。</small>
                         </div>
                         <div class="form-group">
                             <label>Refresh Token (RT)</label>
@@ -150,9 +150,15 @@
                 <div id="batchImport" class="import-panel" style="display: none;">
                     <form id="batchImportForm" onsubmit="handleBatchImport(event)">
                         <div class="form-group">
+                            <label>共享 Client ID</label>
+                            <input type="text" name="batchClientId" class="form-control" placeholder="app_xxx">
+                            <small class="form-text">当批量内容是 OpenAI Refresh Token 时可在这里填一次，支持每行一个 RT 自动验证导入。</small>
+                        </div>
+                        <div class="form-group">
                             <label>批量导入内容 <span class="required">*</span></label>
-                            <textarea name="batchContent" class="form-control" rows="8" placeholder="一行一个 AT Token..."
+                            <textarea name="batchContent" class="form-control" rows="8" placeholder="每行一个 OpenAI Refresh Token，或粘贴原有 AT / RT / ST 混合内容"
                                 required></textarea>
+                            <small class="form-text">示例：一行一个 rt-...；也兼容 邮箱----rt-...----app_xxx、AT----邮箱----Account ID 等旧格式。</small>
                         </div>
                         <div id="batchProgressContainer" style="display: none; margin-bottom: 1.5rem;">
                             <div class="progress-info"

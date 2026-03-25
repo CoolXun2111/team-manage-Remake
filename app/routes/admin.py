@@ -41,6 +41,7 @@ class TeamImportRequest(BaseModel):
     email: Optional[str] = Field(None, description="邮箱 (单个导入)")
     account_id: Optional[str] = Field(None, description="Account ID (单个导入)")
     content: Optional[str] = Field(None, description="批量导入内容")
+    batch_client_id: Optional[str] = Field(None, description="批量导入共享 Client ID")
 
 
 class AddMemberRequest(BaseModel):
@@ -311,7 +312,8 @@ async def team_import(
             async def progress_generator():
                 async for status_item in team_service.import_team_batch(
                     text=import_data.content,
-                    db_session=db
+                    db_session=db,
+                    shared_client_id=import_data.batch_client_id
                 ):
                     yield json.dumps(status_item, ensure_ascii=False) + "\n"
 
