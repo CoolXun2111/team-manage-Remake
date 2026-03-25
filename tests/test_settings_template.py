@@ -85,6 +85,9 @@ class SettingsTemplateTests(unittest.TestCase):
 
         self.assertIn('href="/admin/auto-reinvite"', html)
         self.assertIn('class="menu-item active"', html)
+        self.assertIn(">自动补邀<", html)
+        self.assertNotIn('class="settings-topbar"', html)
+        self.assertNotIn('data-panel="panel-proxy"', html)
         self.assertIn("const serverDefaultPanel = 'panel-auto-reinvite';", html)
 
 

@@ -4,6 +4,13 @@
 
 {% block content %}
 <section class="settings-shell">
+    {% if active_page == 'auto_reinvite' %}
+    <header class="settings-section-header">
+        <p class="settings-section-kicker">Automation</p>
+        <h2>自动补邀</h2>
+        <p class="settings-section-lead">在这里集中管理补邀规则、执行频率和最近一次执行结果。</p>
+    </header>
+    {% else %}
     <header class="settings-section-header">
         <p class="settings-section-kicker">Control Center</p>
         <h2>系统设置</h2>
@@ -41,9 +48,10 @@
             Team 自动刷新
         </button>
     </div>
+    {% endif %}
 
     <div class="settings-panels">
-        <section id="panel-proxy" class="settings-panel is-active" role="tabpanel">
+        <section id="panel-proxy" class="settings-panel{% if active_page != 'auto_reinvite' %} is-active{% endif %}" role="tabpanel" {% if active_page == 'auto_reinvite' %}hidden{% endif %}>
             <form id="proxyForm" class="settings-form-grid">
                 <article class="settings-card settings-card-wide">
                     <div class="settings-card-header">
@@ -263,7 +271,7 @@
             </form>
         </section>
 
-        <section id="panel-auto-reinvite" class="settings-panel" role="tabpanel" hidden>
+        <section id="panel-auto-reinvite" class="settings-panel{% if active_page == 'auto_reinvite' %} is-active{% endif %}" role="tabpanel" {% if active_page != 'auto_reinvite' %}hidden{% endif %}>
             <div class="settings-primary-grid">
                 <form id="autoReinviteForm" class="settings-form-grid">
                     <article class="settings-card">
@@ -1186,14 +1194,15 @@
 
     (() => {
         const serverDefaultPanel = '{{ settings_initial_panel or "" }}';
+        const isAutoReinviteOnly = '{{ "true" if active_page == "auto_reinvite" else "false" }}' === 'true';
         const hashPanel = window.location.hash.replace('#', '');
-        let initialPanel = hashPanel;
+        let initialPanel = isAutoReinviteOnly ? (serverDefaultPanel || 'panel-auto-reinvite') : hashPanel;
 
         if (!initialPanel && serverDefaultPanel) {
             initialPanel = serverDefaultPanel;
         }
 
-        if (!initialPanel) {
+        if (!initialPanel && !isAutoReinviteOnly) {
             try {
                 initialPanel = localStorage.getItem('settings-active-panel');
             } catch (error) {
@@ -1201,8 +1210,11 @@
             }
         }
 
+        const fallbackPanel = isAutoReinviteOnly
+            ? (serverDefaultPanel || 'panel-auto-reinvite')
+            : (serverDefaultPanel || 'panel-proxy');
         const panelExists = initialPanel && document.getElementById(initialPanel);
-        activateSettingsPanel(panelExists ? initialPanel : 'panel-proxy');
+        activateSettingsPanel(panelExists ? initialPanel : fallbackPanel);
     })();
 
     document.getElementById('proxyForm').addEventListener('submit', async (e) => {
