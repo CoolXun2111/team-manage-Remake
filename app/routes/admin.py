@@ -1319,7 +1319,10 @@ async def settings_page(
                 "api_key": await settings_service.get_setting(db, "api_key", ""),
                 "default_team_seat_limit": await settings_service.get_setting(db, "default_team_seat_limit", "6"),
                 "auto_reinvite_enabled": await settings_service.get_setting(db, "auto_reinvite_enabled", "false"),
-                "auto_reinvite_interval_seconds": await settings_service.get_setting(db, "auto_reinvite_interval_seconds", "300")
+                "auto_reinvite_interval_seconds": await settings_service.get_setting(db, "auto_reinvite_interval_seconds", "300"),
+                "auto_status_refresh_enabled": await settings_service.get_setting(db, "auto_status_refresh_enabled", "false"),
+                "auto_status_refresh_start_time": await settings_service.get_setting(db, "auto_status_refresh_start_time", "03:00"),
+                "auto_status_refresh_interval_hours": await settings_service.get_setting(db, "auto_status_refresh_interval_hours", "24"),
             }
         )
 
@@ -1342,6 +1345,17 @@ class LogLevelRequest(BaseModel):
     level: str = Field(..., description="日志级别")
 
 
+def _is_valid_hhmm(value: str) -> bool:
+    try:
+        hour_str, minute_str = str(value).strip().split(":", 1)
+        hour = int(hour_str)
+        minute = int(minute_str)
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+    return 0 <= hour <= 23 and 0 <= minute <= 59
+
+
 class WebhookSettingsRequest(BaseModel):
     """Webhook 设置请求"""
     webhook_url: str = Field("", description="Webhook URL")
@@ -1350,6 +1364,9 @@ class WebhookSettingsRequest(BaseModel):
     default_team_seat_limit: int = Field(6, description="默认席位上限")
     auto_reinvite_enabled: bool = Field(False, description="是否启用自动补邀")
     auto_reinvite_interval_seconds: int = Field(300, description="自动补邀巡检间隔")
+    auto_status_refresh_enabled: bool = Field(False, description="是否启用账号状态自动刷新")
+    auto_status_refresh_start_time: str = Field("03:00", description="账号状态自动刷新开始时间")
+    auto_status_refresh_interval_hours: int = Field(24, description="账号状态自动刷新周期")
 
 
 @router.post("/settings/proxy")
@@ -1480,13 +1497,29 @@ async def update_webhook_settings(
                 content={"success": False, "error": "自动补邀巡检间隔不能小于 60 秒"}
             )
 
+        if not _is_valid_hhmm(webhook_data.auto_status_refresh_start_time):
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "账号状态自动刷新时间格式错误，请使用 HH:MM"}
+            )
+
+        if webhook_data.auto_status_refresh_interval_hours < 1 or webhook_data.auto_status_refresh_interval_hours > 24:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "账号状态自动刷新周期必须在 1-24 小时之间"}
+            )
+
         settings = {
             "webhook_url": webhook_data.webhook_url.strip(),
             "low_stock_threshold": str(webhook_data.low_stock_threshold),
             "api_key": webhook_data.api_key.strip(),
             "default_team_seat_limit": str(webhook_data.default_team_seat_limit),
             "auto_reinvite_enabled": str(webhook_data.auto_reinvite_enabled).lower(),
-            "auto_reinvite_interval_seconds": str(webhook_data.auto_reinvite_interval_seconds)
+            "auto_reinvite_interval_seconds": str(webhook_data.auto_reinvite_interval_seconds),
+            "auto_status_refresh_enabled": str(webhook_data.auto_status_refresh_enabled).lower(),
+            "auto_status_refresh_start_time": webhook_data.auto_status_refresh_start_time.strip(),
+            "auto_status_refresh_interval_hours": str(webhook_data.auto_status_refresh_interval_hours),
+            "auto_status_refresh_last_slot": "",
         }
 
         success = await settings_service.update_settings(db, settings)

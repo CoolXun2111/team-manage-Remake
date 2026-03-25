@@ -134,6 +134,29 @@
         </div>
 
         <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="autoStatusRefreshEnabled" name="auto_status_refresh_enabled"
+                    {% if auto_status_refresh_enabled == 'true' %}checked{% endif %}>
+                <span>启用账号状态自动刷新</span>
+            </label>
+            <p class="form-help">系统会按计划自动同步非封禁 Team 的账号状态、席位和到期信息。</p>
+        </div>
+
+        <div class="form-group">
+            <label for="autoStatusRefreshStartTime">账号状态自动刷新时间</label>
+            <input type="time" id="autoStatusRefreshStartTime" name="auto_status_refresh_start_time"
+                value="{{ auto_status_refresh_start_time or '03:00' }}" class="form-control">
+            <p class="form-help">这是首轮刷新时间，之后会按下面的周期循环执行。</p>
+        </div>
+
+        <div class="form-group">
+            <label for="autoStatusRefreshIntervalHours">账号状态自动刷新周期（小时）</label>
+            <input type="number" id="autoStatusRefreshIntervalHours" name="auto_status_refresh_interval_hours"
+                value="{{ auto_status_refresh_interval_hours or '24' }}" min="1" max="24" class="form-control">
+            <p class="form-help">支持 1-24 小时；例如开始时间 03:00、周期 6 小时，则会在 03:00、09:00、15:00、21:00 执行。</p>
+        </div>
+
+        <div class="form-group">
             <label>质保规则</label>
             <div class="form-control readonly-block">
                 质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。
@@ -278,6 +301,9 @@
         const default_team_seat_limit = parseInt(document.getElementById('defaultTeamSeatLimit').value, 10);
         const auto_reinvite_enabled = document.getElementById('autoReinviteEnabled').checked;
         const auto_reinvite_interval_seconds = parseInt(document.getElementById('autoReinviteInterval').value, 10);
+        const auto_status_refresh_enabled = document.getElementById('autoStatusRefreshEnabled').checked;
+        const auto_status_refresh_start_time = document.getElementById('autoStatusRefreshStartTime').value;
+        const auto_status_refresh_interval_hours = parseInt(document.getElementById('autoStatusRefreshIntervalHours').value, 10);
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
@@ -294,6 +320,16 @@
             return;
         }
 
+        if (!/^\d{2}:\d{2}$/.test(auto_status_refresh_start_time)) {
+            showToast('请输入有效的账号状态自动刷新时间', 'error');
+            return;
+        }
+
+        if (isNaN(auto_status_refresh_interval_hours) || auto_status_refresh_interval_hours < 1 || auto_status_refresh_interval_hours > 24) {
+            showToast('账号状态自动刷新周期必须在 1-24 小时之间', 'error');
+            return;
+        }
+
         try {
             const response = await fetch('/admin/settings/webhook', {
                 method: 'POST',
@@ -306,7 +342,10 @@
                     api_key,
                     default_team_seat_limit,
                     auto_reinvite_enabled,
-                    auto_reinvite_interval_seconds
+                    auto_reinvite_interval_seconds,
+                    auto_status_refresh_enabled,
+                    auto_status_refresh_start_time,
+                    auto_status_refresh_interval_hours
                 })
             });
 

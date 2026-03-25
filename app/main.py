@@ -17,6 +17,7 @@ from app.database import AsyncSessionLocal, close_db, init_db
 from app.routes import admin, api, auth, redeem, user, warranty
 from app.services.auth import auth_service
 from app.services.auto_reinvite import auto_reinvite_service
+from app.services.auto_status_refresh import auto_status_refresh_service
 from app.webui import render_template_response
 
 
@@ -50,6 +51,7 @@ async def lifespan(_app: FastAPI):
             await auth_service.initialize_admin_password(session)
 
         await auto_reinvite_service.start()
+        await auto_status_refresh_service.start()
         logger.info("数据库初始化完成")
     except Exception as exc:
         logger.error(f"数据库初始化失败: {exc}")
@@ -57,6 +59,7 @@ async def lifespan(_app: FastAPI):
     yield
 
     await auto_reinvite_service.stop()
+    await auto_status_refresh_service.stop()
     await close_db()
     logger.info("系统正在关闭，已释放数据库连接")
 
