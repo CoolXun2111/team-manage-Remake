@@ -39,6 +39,7 @@ async def redeem_page(
         team_service = TeamService()
         remaining_spots = await team_service.get_total_available_seats(db)
         after_sales_group_url = await settings_service.get_setting(db, "after_sales_group_url", "")
+        after_sales_group_text = await settings_service.get_setting(db, "after_sales_group_text", "售后群入口")
 
         logger.info(f"用户访问兑换页面，剩余车位: {remaining_spots}")
 
@@ -49,6 +50,7 @@ async def redeem_page(
                 "request": request,
                 "remaining_spots": remaining_spots,
                 "after_sales_group_url": after_sales_group_url,
+                "after_sales_group_text": after_sales_group_text,
             }
         )
 

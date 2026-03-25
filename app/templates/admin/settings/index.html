@@ -176,6 +176,14 @@
                         <p class="form-help">配置后，兑换页面会显示“售后群”按钮，用户可直接跳转到售后支持群。</p>
                     </div>
 
+                    <div class="form-group">
+                        <label for="afterSalesGroupText">售后群按钮文案</label>
+                        <input type="text" id="afterSalesGroupText" name="after_sales_group_text"
+                            value="{{ after_sales_group_text or '售后群入口' }}" placeholder="售后群入口"
+                            class="form-control">
+                        <p class="form-help">用于兑换页售后按钮主文案，未填写时默认显示“售后群入口”。</p>
+                    </div>
+
                     <div class="settings-actions">
                         <button type="submit" class="btn btn-primary">保存 Webhook 与售后入口</button>
                     </div>
@@ -721,6 +729,7 @@
         const low_stock_threshold = parseInt(document.getElementById('lowStockThreshold').value, 10);
         const api_key = document.getElementById('apiKey').value.trim();
         const after_sales_group_url = document.getElementById('afterSalesGroupUrl').value.trim();
+        const after_sales_group_text = document.getElementById('afterSalesGroupText').value.trim();
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
@@ -732,7 +741,8 @@
                 webhook_url,
                 low_stock_threshold,
                 api_key,
-                after_sales_group_url
+                after_sales_group_url,
+                after_sales_group_text
             });
 
             if (response.ok && data.success) {

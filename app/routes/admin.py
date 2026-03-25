@@ -1318,6 +1318,7 @@ async def settings_page(
                 "low_stock_threshold": await settings_service.get_setting(db, "low_stock_threshold", "10"),
                 "api_key": await settings_service.get_setting(db, "api_key", ""),
                 "after_sales_group_url": await settings_service.get_setting(db, "after_sales_group_url", ""),
+                "after_sales_group_text": await settings_service.get_setting(db, "after_sales_group_text", "售后群入口"),
                 "default_team_seat_limit": await settings_service.get_setting(db, "default_team_seat_limit", "6"),
                 "auto_reinvite_enabled": await settings_service.get_setting(db, "auto_reinvite_enabled", "false"),
                 "auto_reinvite_interval_seconds": await settings_service.get_setting(db, "auto_reinvite_interval_seconds", "300"),
@@ -1363,6 +1364,7 @@ class WebhookSettingsRequest(BaseModel):
     low_stock_threshold: int = Field(10, description="库存阈值")
     api_key: str = Field("", description="API Key")
     after_sales_group_url: str = Field("", description="售后群链接")
+    after_sales_group_text: str = Field("售后群入口", description="售后群按钮文案")
 
 
 class TeamDefaultSettingsRequest(BaseModel):
@@ -1504,6 +1506,7 @@ async def update_webhook_settings(
             "low_stock_threshold": str(webhook_data.low_stock_threshold),
             "api_key": webhook_data.api_key.strip(),
             "after_sales_group_url": webhook_data.after_sales_group_url.strip(),
+            "after_sales_group_text": webhook_data.after_sales_group_text.strip() or "售后群入口",
         }
 
         success = await settings_service.update_settings(db, settings)
