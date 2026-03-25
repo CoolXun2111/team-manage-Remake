@@ -1361,7 +1361,15 @@ class WebhookSettingsRequest(BaseModel):
     webhook_url: str = Field("", description="Webhook URL")
     low_stock_threshold: int = Field(10, description="库存阈值")
     api_key: str = Field("", description="API Key")
+
+
+class TeamDefaultSettingsRequest(BaseModel):
+    """Team 默认限制设置请求"""
     default_team_seat_limit: int = Field(6, description="默认席位上限")
+
+
+class AutoReinviteSettingsRequest(BaseModel):
+    """自动补邀设置请求"""
     auto_reinvite_enabled: bool = Field(False, description="是否启用自动补邀")
     auto_reinvite_interval_seconds: int = Field(300, description="自动补邀巡检间隔")
 
@@ -1489,31 +1497,16 @@ async def update_webhook_settings(
 
         logger.info(f"管理员更新 Webhook/API 配置: url={webhook_data.webhook_url}, threshold={webhook_data.low_stock_threshold}")
 
-        if webhook_data.default_team_seat_limit < 1 or webhook_data.default_team_seat_limit > 100:
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content={"success": False, "error": "默认席位上限必须在 1-100 之间"}
-            )
-
-        if webhook_data.auto_reinvite_interval_seconds < 60:
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                content={"success": False, "error": "自动补邀巡检间隔不能小于 60 秒"}
-            )
-
         settings = {
             "webhook_url": webhook_data.webhook_url.strip(),
             "low_stock_threshold": str(webhook_data.low_stock_threshold),
             "api_key": webhook_data.api_key.strip(),
-            "default_team_seat_limit": str(webhook_data.default_team_seat_limit),
-            "auto_reinvite_enabled": str(webhook_data.auto_reinvite_enabled).lower(),
-            "auto_reinvite_interval_seconds": str(webhook_data.auto_reinvite_interval_seconds),
         }
 
         success = await settings_service.update_settings(db, settings)
 
         if success:
-            return JSONResponse(content={"success": True, "message": "配置已保存"})
+            return JSONResponse(content={"success": True, "message": "Webhook 配置已保存"})
         else:
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -1522,6 +1515,94 @@ async def update_webhook_settings(
 
     except Exception as e:
         logger.error(f"更新配置失败: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": f"更新失败: {str(e)}"}
+        )
+
+
+@router.post("/settings/team-defaults")
+async def update_team_default_settings(
+    team_default_data: TeamDefaultSettingsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    """更新 Team 默认限制设置"""
+    try:
+        from app.services.settings import settings_service
+
+        logger.info(
+            "管理员更新 Team 默认限制: default_team_seat_limit=%s",
+            team_default_data.default_team_seat_limit,
+        )
+
+        if team_default_data.default_team_seat_limit < 1 or team_default_data.default_team_seat_limit > 100:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "默认席位上限必须在 1-100 之间"}
+            )
+
+        success = await settings_service.update_settings(
+            db,
+            {"default_team_seat_limit": str(team_default_data.default_team_seat_limit)},
+        )
+
+        if success:
+            return JSONResponse(content={"success": True, "message": "Team 默认限制已保存"})
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": "保存失败"}
+        )
+
+    except Exception as e:
+        logger.error(f"更新 Team 默认限制失败: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": f"更新失败: {str(e)}"}
+        )
+
+
+@router.post("/settings/auto-reinvite")
+async def update_auto_reinvite_settings(
+    reinvite_data: AutoReinviteSettingsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    """更新自动补邀设置"""
+    try:
+        from app.services.settings import settings_service
+
+        logger.info(
+            "管理员更新自动补邀配置: enabled=%s, interval_seconds=%s",
+            reinvite_data.auto_reinvite_enabled,
+            reinvite_data.auto_reinvite_interval_seconds,
+        )
+
+        if reinvite_data.auto_reinvite_interval_seconds < 60:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "自动补邀巡检间隔不能小于 60 秒"}
+            )
+
+        success = await settings_service.update_settings(
+            db,
+            {
+                "auto_reinvite_enabled": str(reinvite_data.auto_reinvite_enabled).lower(),
+                "auto_reinvite_interval_seconds": str(reinvite_data.auto_reinvite_interval_seconds),
+            },
+        )
+
+        if success:
+            return JSONResponse(content={"success": True, "message": "自动补邀配置已保存"})
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": "保存失败"}
+        )
+
+    except Exception as e:
+        logger.error(f"更新自动补邀配置失败: {e}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"success": False, "error": f"更新失败: {str(e)}"}

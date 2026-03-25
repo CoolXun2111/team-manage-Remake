@@ -6,9 +6,9 @@
 <section class="settings-shell">
     <div class="settings-hero">
         <div>
-            <p class="settings-kicker">System Control</p>
+            <p class="settings-kicker">System Settings</p>
             <h2>系统设置</h2>
-            <p class="settings-subtitle">按模块集中管理代理、账号安全、日志和自动化任务。</p>
+            <p class="settings-subtitle">按模块集中管理代理、密码、日志、Webhook、默认席位、自动补邀和 Team 自动刷新。</p>
         </div>
     </div>
 
@@ -22,8 +22,14 @@
         <button type="button" class="settings-tab" data-panel="panel-log" role="tab" aria-selected="false">
             日志级别
         </button>
-        <button type="button" class="settings-tab" data-panel="panel-token" role="tab" aria-selected="false">
-            Token 预刷新
+        <button type="button" class="settings-tab" data-panel="panel-webhook" role="tab" aria-selected="false">
+            Webhook 通知
+        </button>
+        <button type="button" class="settings-tab" data-panel="panel-team-default" role="tab" aria-selected="false">
+            Team 默认限制
+        </button>
+        <button type="button" class="settings-tab" data-panel="panel-auto-reinvite" role="tab" aria-selected="false">
+            自动补邀
         </button>
         <button type="button" class="settings-tab" data-panel="panel-team-refresh" role="tab" aria-selected="false">
             Team 自动刷新
@@ -81,8 +87,8 @@
 
                     <div class="form-group">
                         <label for="newPassword">新密码</label>
-                        <input type="password" id="newPassword" name="new_password" required minlength="6" class="form-control"
-                            placeholder="请输入新密码，至少 6 位">
+                        <input type="password" id="newPassword" name="new_password" required minlength="6"
+                            class="form-control" placeholder="请输入新密码，至少 6 位">
                     </div>
 
                     <div class="form-group">
@@ -106,7 +112,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>日志级别</h3>
-                            <p>控制后台日志的详细程度，排查问题时可临时切到更高详细度。</p>
+                            <p>控制后台日志的详细程度，排查问题时可以临时切到更高详细度。</p>
                         </div>
                     </div>
 
@@ -129,13 +135,13 @@
             </form>
         </section>
 
-        <section id="panel-token" class="settings-panel" role="tabpanel" hidden>
+        <section id="panel-webhook" class="settings-panel" role="tabpanel" hidden>
             <form id="webhookForm" class="settings-form-grid">
                 <article class="settings-card settings-card-wide">
                     <div class="settings-card-header">
                         <div>
-                            <h3>补货通知</h3>
-                            <p>库存不足时可自动通知外部系统补货，也能同步传递 API Key 供第三方调用。</p>
+                            <h3>Webhook 通知</h3>
+                            <p>库存不足时自动通知外部系统，也可同步传递 API Key 供第三方调用。</p>
                         </div>
                     </div>
 
@@ -161,13 +167,21 @@
                             <p class="form-help">用于库存或补货系统对接。</p>
                         </div>
                     </div>
-                </article>
 
-                <article class="settings-card">
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存 Webhook 通知</button>
+                    </div>
+                </article>
+            </form>
+        </section>
+
+        <section id="panel-team-default" class="settings-panel" role="tabpanel" hidden>
+            <form id="teamDefaultForm" class="settings-form-grid">
+                <article class="settings-card settings-card-narrow">
                     <div class="settings-card-header">
                         <div>
                             <h3>Team 默认限制</h3>
-                            <p>控制新导入母号默认可分配的席位上限。</p>
+                            <p>控制新导入母号时默认可分配的席位上限，不再和补邀等其他设置混在一起。</p>
                         </div>
                     </div>
 
@@ -177,13 +191,21 @@
                             value="{{ default_team_seat_limit or '6' }}" min="1" max="100" class="form-control">
                         <p class="form-help">单个 Team 仍可在编辑弹窗里单独调整。</p>
                     </div>
-                </article>
 
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存 Team 默认限制</button>
+                    </div>
+                </article>
+            </form>
+        </section>
+
+        <section id="panel-auto-reinvite" class="settings-panel" role="tabpanel" hidden>
+            <form id="autoReinviteForm" class="settings-form-grid">
                 <article class="settings-card">
                     <div class="settings-card-header">
                         <div>
-                            <h3>补邀与质保策略</h3>
-                            <p>用于处理失效母号后的自动补邀，以及质保期内的重复兑付逻辑。</p>
+                            <h3>自动补邀</h3>
+                            <p>专门管理失效母号补邀与质保规则，不再和默认席位设置共用同一表单。</p>
                         </div>
                     </div>
 
@@ -207,11 +229,11 @@
                         <span class="settings-note-label">质保规则</span>
                         <p>质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。</p>
                     </div>
-                </article>
 
-                <div class="settings-actions settings-actions-full">
-                    <button type="submit" class="btn btn-primary">保存 Token 相关设置</button>
-                </div>
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存自动补邀设置</button>
+                    </div>
+                </article>
             </form>
         </section>
 
@@ -221,7 +243,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>计划设置</h3>
-                            <p>按你设定的起始时间和周期自动刷新 Team 状态，适合夜间或固定节奏巡检。</p>
+                            <p>按你设定的开始时间和周期自动刷新 Team 状态，适合夜间或固定节奏巡检。</p>
                         </div>
                     </div>
 
@@ -280,42 +302,48 @@
 <style>
     .settings-shell {
         display: grid;
-        gap: 1.5rem;
+        gap: 24px;
     }
 
     .settings-hero {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 1rem;
+        border: 1px solid #eadbc8;
+        border-radius: 24px;
+        padding: 28px 30px;
+        background:
+            radial-gradient(circle at top right, rgba(255, 213, 153, 0.45), transparent 30%),
+            linear-gradient(135deg, #fff7ed 0%, #fffaf5 55%, #ffffff 100%);
+        box-shadow: 0 14px 32px rgba(100, 69, 32, 0.08);
     }
 
     .settings-kicker {
-        margin: 0 0 0.4rem;
-        font-size: 0.75rem;
+        margin: 0 0 10px;
+        font-size: 12px;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: #9a7b53;
+        color: #9a6b34;
     }
 
     .settings-hero h2 {
         margin: 0;
-        font-size: clamp(2rem, 3vw, 2.6rem);
-        letter-spacing: -0.03em;
+        font-size: 42px;
+        font-weight: 800;
+        color: #22150b;
     }
 
     .settings-subtitle {
-        margin: 0.65rem 0 0;
-        max-width: 44rem;
-        color: var(--text-muted);
+        margin: 12px 0 0;
+        max-width: 760px;
+        color: #5c4632;
+        font-size: 15px;
+        line-height: 1.7;
     }
 
     .settings-tabs {
         display: flex;
-        gap: 0.75rem;
+        gap: 12px;
         overflow-x: auto;
-        padding-bottom: 0.25rem;
+        padding-bottom: 6px;
         scrollbar-width: none;
     }
 
@@ -324,27 +352,33 @@
     }
 
     .settings-tab {
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        background: rgba(255, 255, 255, 0.66);
-        color: var(--text-secondary);
+        flex: 0 0 auto;
+        border: 1px solid #ecdcc8;
         border-radius: 999px;
-        padding: 0.85rem 1.2rem;
-        font-size: 0.98rem;
+        padding: 12px 20px;
+        background: #ffffff;
+        color: #4e3929;
+        font-size: 15px;
         font-weight: 600;
-        white-space: nowrap;
-        transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+        transition: all 0.2s ease;
+        box-shadow: 0 8px 20px rgba(130, 98, 64, 0.05);
     }
 
     .settings-tab:hover {
+        border-color: #dcb98c;
+        color: #2f2014;
         transform: translateY(-1px);
-        border-color: rgba(154, 123, 83, 0.32);
     }
 
     .settings-tab.is-active {
-        background: #f4e6d5;
-        color: #6f4f2b;
-        border-color: rgba(154, 123, 83, 0.12);
-        box-shadow: 0 10px 24px rgba(186, 139, 83, 0.12);
+        border-color: #f0d6b5;
+        background: #fbecd9;
+        color: #24170d;
+        box-shadow: 0 14px 28px rgba(191, 136, 74, 0.18);
+    }
+
+    .settings-panels {
+        display: grid;
     }
 
     .settings-panel[hidden] {
@@ -369,135 +403,168 @@
 
     .settings-form-grid {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1.25rem;
+        gap: 18px;
     }
 
     .settings-card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
-        border: 1px solid rgba(148, 163, 184, 0.16);
-        border-radius: 24px;
-        padding: 1.35rem;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+        border: 1px solid #efe2d2;
+        border-radius: 22px;
+        padding: 24px;
+        background: #ffffff;
+        box-shadow: 0 18px 36px rgba(80, 56, 31, 0.06);
     }
 
     .settings-card-wide {
-        grid-column: 1 / -1;
+        max-width: 100%;
     }
 
     .settings-card-narrow {
-        max-width: 40rem;
+        max-width: 680px;
     }
 
     .settings-card-header {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1.1rem;
+        gap: 16px;
+        margin-bottom: 18px;
     }
 
     .settings-card-header h3 {
         margin: 0;
-        font-size: 1.08rem;
+        font-size: 22px;
+        color: #1f140b;
     }
 
     .settings-card-header p {
-        margin: 0.4rem 0 0;
-        color: var(--text-muted);
-        line-height: 1.65;
+        margin: 8px 0 0;
+        color: #66503d;
+        line-height: 1.7;
+        font-size: 14px;
     }
 
     .settings-form-split {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
+        gap: 16px;
     }
 
-    .checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        cursor: pointer;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
+    .form-group {
+        display: grid;
+        gap: 8px;
+    }
+
+    .form-group label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #352416;
+    }
+
+    .form-control {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid #dcc5ab;
+        border-radius: 14px;
+        padding: 11px 14px;
+        background: #fffdfa;
+        color: #24170d;
+        transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #cf9556;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(207, 149, 86, 0.14);
     }
 
     .form-help {
-        margin-top: 0.4rem;
-        color: var(--text-muted);
-        font-size: 0.82rem;
-        line-height: 1.6;
+        margin: 0;
+        color: #806451;
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .checkbox-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+
+    .checkbox-label input {
+        width: 18px;
+        height: 18px;
+        accent-color: #bc7a33;
     }
 
     .settings-note {
-        margin-top: 1rem;
-        padding: 1rem 1.05rem;
-        border-radius: 18px;
-        background: #f8f1e7;
-        border: 1px solid rgba(191, 145, 93, 0.16);
+        border-radius: 16px;
+        padding: 16px 18px;
+        background: #fff6ea;
+        border: 1px solid #f0dcbc;
     }
 
     .settings-note-label {
         display: inline-block;
-        margin-bottom: 0.35rem;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #8a6840;
+        color: #9e6b32;
     }
 
     .settings-note p {
         margin: 0;
-        color: #6b4d2a;
-        line-height: 1.7;
-    }
-
-    .settings-list {
-        margin: 0;
-        padding-left: 1.15rem;
-        color: var(--text-secondary);
-        display: grid;
-        gap: 0.7rem;
+        color: #5f4834;
         line-height: 1.7;
     }
 
     .settings-actions {
         display: flex;
-        justify-content: flex-start;
-        margin-top: 1.2rem;
+        justify-content: flex-end;
+        margin-top: 8px;
     }
 
-    .settings-actions-full {
-        grid-column: 1 / -1;
-        margin-top: 0;
+    .settings-list {
+        margin: 0;
+        padding-left: 20px;
+        color: #5f4834;
+        line-height: 1.8;
     }
 
     @media (max-width: 900px) {
-        .settings-form-grid,
-        .settings-form-split {
-            grid-template-columns: 1fr;
+        .settings-hero {
+            padding: 24px 20px;
         }
 
-        .settings-card-narrow {
-            max-width: none;
+        .settings-hero h2 {
+            font-size: 34px;
+        }
+
+        .settings-form-split {
+            grid-template-columns: 1fr;
         }
     }
 
     @media (max-width: 640px) {
         .settings-shell {
-            gap: 1.1rem;
+            gap: 18px;
         }
 
-        .settings-card {
-            padding: 1.1rem;
-            border-radius: 20px;
+        .settings-hero h2 {
+            font-size: 30px;
         }
 
         .settings-tab {
-            padding: 0.78rem 1rem;
-            font-size: 0.94rem;
+            padding: 11px 16px;
+            font-size: 14px;
+        }
+
+        .settings-card {
+            padding: 18px;
+            border-radius: 18px;
         }
     }
 </style>
@@ -526,6 +593,19 @@
         } catch (error) {
             console.debug('无法缓存设置页签', error);
         }
+    }
+
+    async function postJson(url, payload) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        return { response, data };
     }
 
     settingsTabs.forEach((tab) => {
@@ -560,17 +640,10 @@
         }
 
         try {
-            const response = await fetch('/admin/settings/proxy', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ enabled, proxy })
-            });
+            const { response, data } = await postJson('/admin/settings/proxy', { enabled, proxy });
 
-            const data = await response.json();
             if (response.ok && data.success) {
-                showToast('代理配置已保存', 'success');
+                showToast(data.message || '代理配置已保存', 'success');
             } else {
                 showToast(data.error || '保存失败', 'error');
             }
@@ -597,18 +670,11 @@
         }
 
         try {
-            const response = await fetch('/auth/change-password', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    old_password: oldPassword,
-                    new_password: newPassword
-                })
+            const { response, data } = await postJson('/auth/change-password', {
+                old_password: oldPassword,
+                new_password: newPassword
             });
 
-            const data = await response.json();
             if (response.ok && data.success) {
                 showToast('密码修改成功，即将跳转登录页', 'success');
                 setTimeout(() => {
@@ -628,17 +694,10 @@
         const level = document.getElementById('logLevel').value;
 
         try {
-            const response = await fetch('/admin/settings/log-level', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ level })
-            });
+            const { response, data } = await postJson('/admin/settings/log-level', { level });
 
-            const data = await response.json();
             if (response.ok && data.success) {
-                showToast('日志级别已保存', 'success');
+                showToast(data.message || '日志级别已保存', 'success');
             } else {
                 showToast(data.error || '保存失败', 'error');
             }
@@ -653,19 +712,59 @@
         const webhook_url = document.getElementById('webhookUrl').value.trim();
         const low_stock_threshold = parseInt(document.getElementById('lowStockThreshold').value, 10);
         const api_key = document.getElementById('apiKey').value.trim();
-        const default_team_seat_limit = parseInt(document.getElementById('defaultTeamSeatLimit').value, 10);
-        const auto_reinvite_enabled = document.getElementById('autoReinviteEnabled').checked;
-        const auto_reinvite_interval_seconds = parseInt(document.getElementById('autoReinviteInterval').value, 10);
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
             return;
         }
 
+        try {
+            const { response, data } = await postJson('/admin/settings/webhook', {
+                webhook_url,
+                low_stock_threshold,
+                api_key
+            });
+
+            if (response.ok && data.success) {
+                showToast(data.message || 'Webhook 配置已保存', 'success');
+            } else {
+                showToast(data.error || '保存失败', 'error');
+            }
+        } catch (error) {
+            showToast('网络错误', 'error');
+        }
+    });
+
+    document.getElementById('teamDefaultForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const default_team_seat_limit = parseInt(document.getElementById('defaultTeamSeatLimit').value, 10);
+
         if (isNaN(default_team_seat_limit) || default_team_seat_limit < 1 || default_team_seat_limit > 100) {
             showToast('默认席位上限必须在 1-100 之间', 'error');
             return;
         }
+
+        try {
+            const { response, data } = await postJson('/admin/settings/team-defaults', {
+                default_team_seat_limit
+            });
+
+            if (response.ok && data.success) {
+                showToast(data.message || 'Team 默认限制已保存', 'success');
+            } else {
+                showToast(data.error || '保存失败', 'error');
+            }
+        } catch (error) {
+            showToast('网络错误', 'error');
+        }
+    });
+
+    document.getElementById('autoReinviteForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const auto_reinvite_enabled = document.getElementById('autoReinviteEnabled').checked;
+        const auto_reinvite_interval_seconds = parseInt(document.getElementById('autoReinviteInterval').value, 10);
 
         if (isNaN(auto_reinvite_interval_seconds) || auto_reinvite_interval_seconds < 60) {
             showToast('自动补邀巡检间隔不能小于 60 秒', 'error');
@@ -673,24 +772,13 @@
         }
 
         try {
-            const response = await fetch('/admin/settings/webhook', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    webhook_url,
-                    low_stock_threshold,
-                    api_key,
-                    default_team_seat_limit,
-                    auto_reinvite_enabled,
-                    auto_reinvite_interval_seconds
-                })
+            const { response, data } = await postJson('/admin/settings/auto-reinvite', {
+                auto_reinvite_enabled,
+                auto_reinvite_interval_seconds
             });
 
-            const data = await response.json();
             if (response.ok && data.success) {
-                showToast('Token 相关设置已保存', 'success');
+                showToast(data.message || '自动补邀配置已保存', 'success');
             } else {
                 showToast(data.error || '保存失败', 'error');
             }
@@ -717,21 +805,14 @@
         }
 
         try {
-            const response = await fetch('/admin/settings/team-refresh', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    auto_status_refresh_enabled,
-                    auto_status_refresh_start_time,
-                    auto_status_refresh_interval_hours
-                })
+            const { response, data } = await postJson('/admin/settings/team-refresh', {
+                auto_status_refresh_enabled,
+                auto_status_refresh_start_time,
+                auto_status_refresh_interval_hours
             });
 
-            const data = await response.json();
             if (response.ok && data.success) {
-                showToast('Team 自动刷新配置已保存', 'success');
+                showToast(data.message || 'Team 自动刷新配置已保存', 'success');
             } else {
                 showToast(data.error || '保存失败', 'error');
             }
