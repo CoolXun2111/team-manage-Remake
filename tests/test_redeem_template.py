@@ -39,6 +39,7 @@ class RedeemTemplateTests(unittest.TestCase):
         self.assertIn("联系客服群", html)
         self.assertIn("有问题可进群联系售后", html)
         self.assertIn("https://t.me/example_support", html)
+        self.assertIn("window.redeemPageConfig", html)
 
     def test_hides_support_entry_when_link_is_missing(self):
         html = self.render("")

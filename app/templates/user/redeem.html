@@ -105,6 +105,13 @@
 
     <div id="toast" class="toast"></div>
 
+    <script>
+        window.redeemPageConfig = {
+            afterSalesGroupUrl: {{ (after_sales_group_url or '') | tojson }},
+            afterSalesGroupText: {{ (after_sales_group_text or '售后群入口') | tojson }},
+            afterSalesGroupSubtitle: {{ (after_sales_group_subtitle or '兑换后遇到问题，可直接进群联系售后处理') | tojson }}
+        };
+    </script>
     <script src="{{ url_for('static', path='/js/redeem.js') }}"></script>
     <script>
         if (window.lucide) lucide.createIcons();

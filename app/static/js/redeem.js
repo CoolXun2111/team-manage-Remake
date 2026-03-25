@@ -18,6 +18,7 @@ let currentEmail = '';
 let currentCode = '';
 let availableTeams = [];
 let selectedTeamId = null;
+const redeemPageConfig = window.redeemPageConfig || {};
 
 // Toast提示函数
 function showToast(message, type = 'info') {
@@ -38,6 +39,43 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
+}
+
+function getAfterSalesConfig() {
+    const afterSalesGroupUrl = String(redeemPageConfig.afterSalesGroupUrl || '').trim();
+    const afterSalesGroupText = String(redeemPageConfig.afterSalesGroupText || '').trim() || '售后群入口';
+    const afterSalesGroupSubtitle = String(redeemPageConfig.afterSalesGroupSubtitle || '').trim() || '兑换后遇到问题，可直接进群联系售后处理';
+
+    return {
+        afterSalesGroupUrl,
+        afterSalesGroupText,
+        afterSalesGroupSubtitle
+    };
+}
+
+function renderAfterSalesEntry(extraClass = '') {
+    const { afterSalesGroupUrl, afterSalesGroupText, afterSalesGroupSubtitle } = getAfterSalesConfig();
+
+    if (!afterSalesGroupUrl) {
+        return '';
+    }
+
+    const className = ['support-entry', extraClass].filter(Boolean).join(' ');
+
+    return `
+        <a class="${className}" href="${escapeHtml(afterSalesGroupUrl)}" target="_blank" rel="noopener noreferrer">
+            <span class="support-entry-icon">
+                <i data-lucide="messages-square"></i>
+            </span>
+            <span class="support-entry-copy">
+                <strong>${escapeHtml(afterSalesGroupText)}</strong>
+                <span>${escapeHtml(afterSalesGroupSubtitle)}</span>
+            </span>
+            <span class="support-entry-arrow">
+                <i data-lucide="arrow-up-right"></i>
+            </span>
+        </a>
+    `;
 }
 
 // 切换步骤
@@ -216,6 +254,7 @@ async function confirmRedeem(teamId) {
 function showSuccessResult(data) {
     const resultContent = document.getElementById('resultContent');
     const teamInfo = data.team_info || {};
+    const successAfterSalesEntry = renderAfterSalesEntry('support-entry-inline');
 
     resultContent.innerHTML = `
         <div class="result-success">
@@ -244,6 +283,8 @@ function showSuccessResult(data) {
                 <i data-lucide="mail" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 5px;"></i>
                 邀请邮件已发送到您的邮箱，请查收并按照邮件指引接受邀请。
             </p>
+
+            ${successAfterSalesEntry}
 
             <div style="margin-bottom: 2rem; border-top: 1px solid var(--border-base); padding-top: 1.5rem;">
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">

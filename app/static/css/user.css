@@ -116,6 +116,12 @@ body {
     box-shadow: 0 20px 36px rgba(99, 102, 241, 0.13);
 }
 
+.support-entry-inline {
+    margin-top: 0;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
 .support-entry-icon,
 .support-entry-arrow {
     flex: 0 0 auto;
