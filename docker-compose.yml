@@ -3,7 +3,7 @@ services:
     build: .
     container_name: ${CONTAINER_NAME:-team-manage-remake-app}
     ports:
-      - "${APP_PORT:-8008}:${APP_PORT:-8008}"
+      - "${HOST_PORT:-8008}:${APP_PORT:-8008}"
     volumes:
       - ./data:/app/data
       - ./.env:/app/.env

@@ -12,6 +12,12 @@ cp .env.example .env
 docker compose up -d
 ```
 
+如果服务器上的旧项目已经占用了 `8008`，请先在 `.env` 中设置：
+```env
+HOST_PORT=8009
+CONTAINER_NAME=team-manage-remake-app
+```
+
 ### 一键更新
 ```bash
 git pull && docker compose down && docker compose up -d --build
@@ -122,6 +128,8 @@ APP_NAME=GPT Team 管理系统
 APP_VERSION=0.1.0
 APP_HOST=0.0.0.0
 APP_PORT=8008
+HOST_PORT=8008
+CONTAINER_NAME=team-manage-remake-app
 DEBUG=True
 
 # 数据库配置（默认使用 SQLite）
