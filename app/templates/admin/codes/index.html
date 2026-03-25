@@ -3,35 +3,52 @@
 {% block title %}兑换码管理 - GPT Team 管理系统{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>兑换码管理</h2>
-</div>
+<section class="content-section workspace-hero">
+    <div class="workspace-hero-main">
+        <p class="workspace-kicker">Code Workspace</p>
+        <h2>兑换码管理</h2>
+        <p class="workspace-summary">集中维护库存、质保状态和使用进度，支持筛选、导出与批量调整。</p>
+        <div class="workspace-pills">
+            <span><i data-lucide="ticket"></i> 库存可视</span>
+            <span><i data-lucide="shield-check"></i> 质保管理</span>
+            <span><i data-lucide="download"></i> 快速导出</span>
+        </div>
+    </div>
+    <div class="workspace-actions">
+        <button onclick="showModal('generateCodeModal')" class="btn btn-primary">
+            <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> 生成兑换码
+        </button>
+        <button onclick="exportCodes()" class="btn btn-secondary">
+            <i data-lucide="download" style="width: 16px; height: 16px;"></i> 导出
+        </button>
+    </div>
+</section>
 
 <!-- 统计卡片 -->
 <div class="stats-container">
     <div class="stat-card">
-        <div class="stat-icon">🎫</div>
+        <div class="stat-icon"><i data-lucide="ticket"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.total }}</div>
             <div class="stat-label">兑换码总数</div>
         </div>
     </div>
     <div class="stat-card stat-success">
-        <div class="stat-icon">✅</div>
+        <div class="stat-icon"><i data-lucide="badge-check"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.unused }}</div>
             <div class="stat-label">未使用</div>
         </div>
     </div>
     <div class="stat-card stat-info">
-        <div class="stat-icon">📝</div>
+        <div class="stat-icon"><i data-lucide="file-check"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.used }}</div>
             <div class="stat-label">已使用</div>
         </div>
     </div>
     <div class="stat-card stat-danger">
-        <div class="stat-icon">⏰</div>
+        <div class="stat-icon"><i data-lucide="clock-3"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.expired }}</div>
             <div class="stat-label">已过期</div>
@@ -42,6 +59,11 @@
 <!-- 操作栏 -->
 <div class="content-section">
     <div class="section-header">
+        <div class="section-meta">
+            <h3>筛选与操作</h3>
+            <span class="badge badge-info">{{ stats.total }} 个兑换码</span>
+        </div>
+
         <div class="header-group">
             <div class="filter-tabs">
                 <button onclick="filterByStatus('')" class="filter-tab {% if not status_filter %}active{% endif %}"
@@ -69,8 +91,17 @@
                 </div>
             </form>
         </div>
+    </div>
+</div>
 
-        <div class="header-actions">
+<!-- 兑换码列表 -->
+<div class="content-section">
+    <div class="section-header">
+        <div class="section-meta">
+            <h3>兑换码列表</h3>
+            <span class="badge badge-secondary">支持批量勾选后统一调整质保</span>
+        </div>
+        <div class="header-group">
             <div class="dropdown-wrapper">
                 <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('columnToggleDropdown')">
                     <i data-lucide="columns" style="width: 16px; height: 16px;"></i> 列设置
@@ -79,18 +110,9 @@
                     <!-- Column checkboxes will be generated here -->
                 </div>
             </div>
-            <button onclick="showModal('generateCodeModal')" class="btn btn-primary">
-                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> 生成兑换码
-            </button>
-            <button onclick="exportCodes()" class="btn btn-secondary">
-                <i data-lucide="download" style="width: 16px; height: 16px;"></i> 导出
-            </button>
         </div>
     </div>
-</div>
 
-<!-- 兑换码列表 -->
-<div class="content-section">
     {% if codes %}
     <div class="table-container">
         <table class="data-table">
@@ -145,7 +167,7 @@
                         {% if code.has_warranty %}
                         <span class="status-badge status-info">是</span>
                         {% else %}
-                        <span class="status-badge" style="background: #f3f4f6; color: #6b7280;">否</span>
+                        <span class="badge badge-secondary">否</span>
                         {% endif %}
                     </td>
                     <td>
@@ -369,49 +391,6 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    .bulk-action-bar {
-        position: fixed;
-        bottom: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
-        background: white;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        gap: 2rem;
-        z-index: 100;
-        border: 1px solid var(--border-color);
-        animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-        from {
-            transform: translate(-50%, 100%);
-            opacity: 0;
-        }
-
-        to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-        }
-    }
-
-    .bulk-info {
-        font-weight: 500;
-        color: var(--text-color);
-    }
-
-    .bulk-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-</style>
 {% endblock %}
 
 {% block extra_js %}

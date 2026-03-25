@@ -3,35 +3,44 @@
 {% block title %}使用记录 - GPT Team 管理系统{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2>使用记录</h2>
-</div>
+<section class="content-section workspace-hero">
+    <div class="workspace-hero-main">
+        <p class="workspace-kicker">Records Workspace</p>
+        <h2>使用记录</h2>
+        <p class="workspace-summary">按用户、兑换码、Team 和时间窗口回溯兑换行为，支持快速定位并执行撤回。</p>
+        <div class="workspace-pills">
+            <span><i data-lucide="history"></i> 兑换追踪</span>
+            <span><i data-lucide="search"></i> 多条件筛选</span>
+            <span><i data-lucide="undo-2"></i> 快速撤回</span>
+        </div>
+    </div>
+</section>
 
 <!-- 统计卡片 -->
 <div class="stats-container">
     <div class="stat-card">
-        <div class="stat-icon">📝</div>
+        <div class="stat-icon"><i data-lucide="scroll-text"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.total }}</div>
             <div class="stat-label">总记录数</div>
         </div>
     </div>
     <div class="stat-card stat-info">
-        <div class="stat-icon">📅</div>
+        <div class="stat-icon"><i data-lucide="calendar-days"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.today }}</div>
             <div class="stat-label">今日使用</div>
         </div>
     </div>
     <div class="stat-card stat-success">
-        <div class="stat-icon">📊</div>
+        <div class="stat-icon"><i data-lucide="bar-chart-3"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.this_week }}</div>
             <div class="stat-label">本周使用</div>
         </div>
     </div>
     <div class="stat-card stat-warning">
-        <div class="stat-icon">📈</div>
+        <div class="stat-icon"><i data-lucide="chart-line"></i></div>
         <div class="stat-content">
             <div class="stat-value">{{ stats.this_month }}</div>
             <div class="stat-label">本月使用</div>
@@ -42,7 +51,10 @@
 <!-- 搜索和筛选 -->
 <div class="content-section">
     <div class="section-header">
-        <h3><i data-lucide="search"></i> 搜索筛选</h3>
+        <div class="section-meta">
+            <h3><i data-lucide="search" style="width: 18px; height: 18px;"></i> 搜索筛选</h3>
+            <span class="badge badge-info">按任意组合条件回溯兑换</span>
+        </div>
     </div>
 
     <form method="get" action="/admin/records" class="search-form-grid">
@@ -84,7 +96,7 @@
 <!-- 使用记录列表 -->
 <div class="content-section">
     <div class="section-header">
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="section-meta">
             <h3>使用记录列表</h3>
             <span class="badge badge-info">{{ pagination.total }} 条记录</span>
         </div>
