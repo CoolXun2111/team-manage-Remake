@@ -5,10 +5,18 @@
 {% block content %}
 <section class="settings-shell">
     <div class="settings-hero">
-        <div>
-            <p class="settings-kicker">System Settings</p>
-            <h2>系统设置</h2>
-            <p class="settings-subtitle">按模块集中管理代理、密码、日志、Webhook、售后入口、默认席位、自动补邀和 Team 自动刷新。</p>
+        <div class="settings-hero-pill">
+            <div class="settings-hero-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.542-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.542-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.542.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35A1.724 1.724 0 0 0 5.38 7.753c-.94-1.542.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="settings-hero-copy">
+                <p class="settings-kicker">Control Center</p>
+                <h2>系统设置</h2>
+                <p class="settings-subtitle">按模块集中管理代理、密码、日志、Webhook、售后支持、默认席位、自动补邀和 Team 自动刷新。</p>
+            </div>
         </div>
     </div>
 
@@ -24,6 +32,9 @@
         </button>
         <button type="button" class="settings-tab" data-panel="panel-webhook" role="tab" aria-selected="false">
             Webhook 通知
+        </button>
+        <button type="button" class="settings-tab" data-panel="panel-after-sales" role="tab" aria-selected="false">
+            售后设置
         </button>
         <button type="button" class="settings-tab" data-panel="panel-team-default" role="tab" aria-selected="false">
             Team 默认限制
@@ -141,7 +152,7 @@
                     <div class="settings-card-header">
                         <div>
                             <h3>Webhook 通知</h3>
-                            <p>库存不足时自动通知外部系统，也可同步传递 API Key，并补充前台售后群跳转入口。</p>
+                            <p>库存不足时自动通知外部系统，也可同步传递 API Key。售后跳转入口已独立到单独设置页签。</p>
                         </div>
                     </div>
 
@@ -168,32 +179,66 @@
                         </div>
                     </div>
 
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary">保存 Webhook 通知</button>
+                    </div>
+                </article>
+            </form>
+        </section>
+
+        <section id="panel-after-sales" class="settings-panel" role="tabpanel" hidden>
+            <form id="afterSalesForm" class="settings-form-grid">
+                <article class="settings-card settings-card-wide">
+                    <div class="settings-card-header">
+                        <div>
+                            <h3>售后支持入口</h3>
+                            <p>单独管理兑换页和兑换成功页里的售后群入口，包括链接、按钮主文案和副标题说明。</p>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="afterSalesGroupUrl">售后群链接</label>
                         <input type="text" id="afterSalesGroupUrl" name="after_sales_group_url"
                             value="{{ after_sales_group_url or '' }}" placeholder="https://t.me/your_support_group"
                             class="form-control">
-                        <p class="form-help">配置后，兑换页面会显示“售后群”按钮，用户可直接跳转到售后支持群。</p>
+                        <p class="form-help">配置后，兑换首页和兑换成功页都会显示售后群入口；留空则自动隐藏。</p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="afterSalesGroupText">售后群按钮文案</label>
-                        <input type="text" id="afterSalesGroupText" name="after_sales_group_text"
-                            value="{{ after_sales_group_text or '售后群入口' }}" placeholder="售后群入口"
-                            class="form-control">
-                        <p class="form-help">用于兑换页售后按钮主文案，未填写时默认显示“售后群入口”。</p>
+                    <div class="settings-form-split">
+                        <div class="form-group">
+                            <label for="afterSalesGroupText">按钮主文案</label>
+                            <input type="text" id="afterSalesGroupText" name="after_sales_group_text"
+                                value="{{ after_sales_group_text or '售后群入口' }}" placeholder="售后群入口"
+                                class="form-control">
+                            <p class="form-help">未填写时默认显示“售后群入口”。</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="afterSalesGroupSubtitle">按钮副标题说明</label>
+                            <input type="text" id="afterSalesGroupSubtitle" name="after_sales_group_subtitle"
+                                value="{{ after_sales_group_subtitle or '兑换后遇到问题，可直接进群联系售后处理' }}"
+                                placeholder="兑换后遇到问题，可直接进群联系售后处理" class="form-control">
+                            <p class="form-help">未填写时会回退到默认提示文案。</p>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="afterSalesGroupSubtitle">售后群副标题文案</label>
-                        <input type="text" id="afterSalesGroupSubtitle" name="after_sales_group_subtitle"
-                            value="{{ after_sales_group_subtitle or '兑换后遇到问题，可直接进群联系售后处理' }}"
-                            placeholder="兑换后遇到问题，可直接进群联系售后处理" class="form-control">
-                        <p class="form-help">用于兑换页售后按钮下方说明，未填写时会回退到默认提示文案。</p>
+                    <div class="settings-preview">
+                        <span class="settings-preview-label">预览</span>
+                        <div class="settings-preview-entry">
+                            <div class="settings-preview-icon">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M8 10.5h8M8 14h5m-1 7c4.97 0 9-3.582 9-8s-4.03-8-9-8-9 3.582-9 8c0 1.971.803 3.777 2.136 5.176.168.176.279.402.297.645l.127 1.72a1 1 0 0 0 1.448.834l2.032-1.073A1.47 1.47 0 0 1 10.71 19c.423.064.854.1 1.29.1Z" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="settings-preview-copy">
+                                <strong>{{ after_sales_group_text or '售后群入口' }}</strong>
+                                <span>{{ after_sales_group_subtitle or '兑换后遇到问题，可直接进群联系售后处理' }}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="settings-actions">
-                        <button type="submit" class="btn btn-primary">保存 Webhook 与售后入口</button>
+                        <button type="submit" class="btn btn-primary">保存售后设置</button>
                     </div>
                 </article>
             </form>
@@ -326,48 +371,89 @@
 <style>
     .settings-shell {
         display: grid;
-        gap: 24px;
+        gap: 22px;
+        --settings-accent: #6a6ff7;
+        --settings-accent-strong: #5c63ff;
+        --settings-accent-soft: #edf0ff;
+        --settings-accent-soft-2: #f5f7ff;
+        --settings-border: #dce2fb;
+        --settings-border-strong: #c9d2fb;
+        --settings-text: #2e3563;
+        --settings-muted: #7077a8;
+        --settings-surface: #ffffff;
+        --settings-shadow: 0 18px 36px rgba(91, 101, 203, 0.08);
     }
 
     .settings-hero {
-        border: 1px solid #eadbc8;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .settings-hero-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        min-width: min(100%, 520px);
+        padding: 18px 22px;
         border-radius: 24px;
-        padding: 28px 30px;
-        background:
-            radial-gradient(circle at top right, rgba(255, 213, 153, 0.45), transparent 30%),
-            linear-gradient(135deg, #fff7ed 0%, #fffaf5 55%, #ffffff 100%);
-        box-shadow: 0 14px 32px rgba(100, 69, 32, 0.08);
+        background: linear-gradient(180deg, #eef1fb 0%, #e9edfb 100%);
+        border: 1px solid #e2e7fb;
+        box-shadow: 0 14px 26px rgba(124, 133, 211, 0.12);
+    }
+
+    .settings-hero-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.68);
+        color: var(--settings-accent);
+        box-shadow: inset 0 0 0 1px rgba(106, 111, 247, 0.12);
+    }
+
+    .settings-hero-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .settings-hero-copy {
+        display: grid;
+        gap: 4px;
     }
 
     .settings-kicker {
-        margin: 0 0 10px;
-        font-size: 12px;
+        margin: 0;
+        font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: #9a6b34;
+        color: #9098c9;
     }
 
     .settings-hero h2 {
         margin: 0;
-        font-size: 42px;
+        font-size: 34px;
         font-weight: 800;
-        color: #22150b;
+        line-height: 1.1;
+        color: var(--settings-accent);
     }
 
     .settings-subtitle {
-        margin: 12px 0 0;
-        max-width: 760px;
-        color: #5c4632;
-        font-size: 15px;
-        line-height: 1.7;
+        margin: 2px 0 0;
+        max-width: 780px;
+        color: var(--settings-muted);
+        font-size: 14px;
+        line-height: 1.65;
     }
 
     .settings-tabs {
         display: flex;
-        gap: 12px;
+        flex-wrap: wrap;
+        gap: 10px;
         overflow-x: auto;
-        padding-bottom: 6px;
+        padding-bottom: 4px;
         scrollbar-width: none;
     }
 
@@ -377,28 +463,28 @@
 
     .settings-tab {
         flex: 0 0 auto;
-        border: 1px solid #ecdcc8;
-        border-radius: 999px;
-        padding: 12px 20px;
-        background: #ffffff;
-        color: #4e3929;
-        font-size: 15px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        box-shadow: 0 8px 20px rgba(130, 98, 64, 0.05);
+        border: 1px solid var(--settings-border);
+        border-radius: 18px;
+        padding: 11px 18px;
+        background: var(--settings-accent-soft-2);
+        color: var(--settings-muted);
+        font-size: 14px;
+        font-weight: 700;
+        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease, background 0.18s ease;
     }
 
     .settings-tab:hover {
-        border-color: #dcb98c;
-        color: #2f2014;
         transform: translateY(-1px);
+        border-color: var(--settings-border-strong);
+        color: var(--settings-accent);
+        box-shadow: 0 10px 18px rgba(106, 111, 247, 0.08);
     }
 
     .settings-tab.is-active {
-        border-color: #f0d6b5;
-        background: #fbecd9;
-        color: #24170d;
-        box-shadow: 0 14px 28px rgba(191, 136, 74, 0.18);
+        color: var(--settings-accent);
+        background: #eef1fb;
+        border-color: #d9e0ff;
+        box-shadow: 0 12px 22px rgba(106, 111, 247, 0.12);
     }
 
     .settings-panels {
@@ -427,15 +513,15 @@
 
     .settings-form-grid {
         display: grid;
-        gap: 18px;
+        gap: 16px;
     }
 
     .settings-card {
-        border: 1px solid #efe2d2;
-        border-radius: 22px;
+        border: 1px solid var(--settings-border);
+        border-radius: 24px;
         padding: 24px;
-        background: #ffffff;
-        box-shadow: 0 18px 36px rgba(80, 56, 31, 0.06);
+        background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+        box-shadow: var(--settings-shadow);
     }
 
     .settings-card-wide {
@@ -443,7 +529,7 @@
     }
 
     .settings-card-narrow {
-        max-width: 680px;
+        max-width: 700px;
     }
 
     .settings-card-header {
@@ -457,12 +543,12 @@
     .settings-card-header h3 {
         margin: 0;
         font-size: 22px;
-        color: #1f140b;
+        color: var(--settings-text);
     }
 
     .settings-card-header p {
         margin: 8px 0 0;
-        color: #66503d;
+        color: var(--settings-muted);
         line-height: 1.7;
         font-size: 14px;
     }
@@ -481,30 +567,30 @@
     .form-group label {
         font-size: 14px;
         font-weight: 700;
-        color: #352416;
+        color: var(--settings-text);
     }
 
     .form-control {
         width: 100%;
         min-height: 46px;
-        border: 1px solid #dcc5ab;
-        border-radius: 14px;
+        border: 1px solid var(--settings-border);
+        border-radius: 16px;
         padding: 11px 14px;
-        background: #fffdfa;
-        color: #24170d;
+        background: #f8f9ff;
+        color: #283057;
         transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
     }
 
     .form-control:focus {
         outline: none;
-        border-color: #cf9556;
+        border-color: var(--settings-accent);
         background: #ffffff;
-        box-shadow: 0 0 0 4px rgba(207, 149, 86, 0.14);
+        box-shadow: 0 0 0 4px rgba(106, 111, 247, 0.12);
     }
 
     .form-help {
         margin: 0;
-        color: #806451;
+        color: var(--settings-muted);
         font-size: 13px;
         line-height: 1.7;
     }
@@ -519,14 +605,14 @@
     .checkbox-label input {
         width: 18px;
         height: 18px;
-        accent-color: #bc7a33;
+        accent-color: var(--settings-accent);
     }
 
     .settings-note {
-        border-radius: 16px;
+        border-radius: 18px;
         padding: 16px 18px;
-        background: #fff6ea;
-        border: 1px solid #f0dcbc;
+        background: linear-gradient(180deg, #eef1ff 0%, #f6f7ff 100%);
+        border: 1px solid #dbe2ff;
     }
 
     .settings-note-label {
@@ -536,13 +622,73 @@
         font-weight: 800;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #9e6b32;
+        color: var(--settings-accent);
     }
 
     .settings-note p {
         margin: 0;
-        color: #5f4834;
+        color: var(--settings-text);
         line-height: 1.7;
+    }
+
+    .settings-preview {
+        display: grid;
+        gap: 10px;
+        margin-top: 4px;
+        padding: 16px;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #f4f6ff 0%, #eef1ff 100%);
+        border: 1px dashed #cdd6ff;
+    }
+
+    .settings-preview-label {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8c95cc;
+    }
+
+    .settings-preview-entry {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(106, 111, 247, 0.12);
+    }
+
+    .settings-preview-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--settings-accent-soft);
+        color: var(--settings-accent);
+    }
+
+    .settings-preview-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .settings-preview-copy {
+        display: grid;
+        gap: 4px;
+    }
+
+    .settings-preview-copy strong {
+        color: var(--settings-text);
+        font-size: 15px;
+    }
+
+    .settings-preview-copy span {
+        color: var(--settings-muted);
+        font-size: 13px;
+        line-height: 1.6;
     }
 
     .settings-actions {
@@ -551,22 +697,29 @@
         margin-top: 8px;
     }
 
+    .settings-actions .btn-primary,
+    .settings-card .btn-primary {
+        border: none;
+        border-radius: 16px;
+        padding: 11px 20px;
+        background: linear-gradient(180deg, var(--settings-accent-strong) 0%, var(--settings-accent) 100%);
+        box-shadow: 0 14px 24px rgba(92, 99, 255, 0.22);
+    }
+
+    .settings-actions .btn-primary:hover,
+    .settings-card .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 28px rgba(92, 99, 255, 0.28);
+    }
+
     .settings-list {
         margin: 0;
         padding-left: 20px;
-        color: #5f4834;
+        color: var(--settings-text);
         line-height: 1.8;
     }
 
     @media (max-width: 900px) {
-        .settings-hero {
-            padding: 24px 20px;
-        }
-
-        .settings-hero h2 {
-            font-size: 34px;
-        }
-
         .settings-form-split {
             grid-template-columns: 1fr;
         }
@@ -577,18 +730,34 @@
             gap: 18px;
         }
 
+        .settings-hero-pill {
+            width: 100%;
+            min-width: 0;
+            padding: 16px 18px;
+        }
+
+        .settings-hero-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 16px;
+        }
+
         .settings-hero h2 {
-            font-size: 30px;
+            font-size: 28px;
         }
 
         .settings-tab {
-            padding: 11px 16px;
-            font-size: 14px;
+            padding: 10px 15px;
+            font-size: 13px;
         }
 
         .settings-card {
             padding: 18px;
-            border-radius: 18px;
+            border-radius: 20px;
+        }
+
+        .settings-preview-entry {
+            align-items: flex-start;
         }
     }
 </style>
@@ -736,9 +905,6 @@
         const webhook_url = document.getElementById('webhookUrl').value.trim();
         const low_stock_threshold = parseInt(document.getElementById('lowStockThreshold').value, 10);
         const api_key = document.getElementById('apiKey').value.trim();
-        const after_sales_group_url = document.getElementById('afterSalesGroupUrl').value.trim();
-        const after_sales_group_text = document.getElementById('afterSalesGroupText').value.trim();
-        const after_sales_group_subtitle = document.getElementById('afterSalesGroupSubtitle').value.trim();
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
@@ -749,14 +915,35 @@
             const { response, data } = await postJson('/admin/settings/webhook', {
                 webhook_url,
                 low_stock_threshold,
-                api_key,
+                api_key
+            });
+
+            if (response.ok && data.success) {
+                showToast(data.message || 'Webhook 配置已保存', 'success');
+            } else {
+                showToast(data.error || '保存失败', 'error');
+            }
+        } catch (error) {
+            showToast('网络错误', 'error');
+        }
+    });
+
+    document.getElementById('afterSalesForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const after_sales_group_url = document.getElementById('afterSalesGroupUrl').value.trim();
+        const after_sales_group_text = document.getElementById('afterSalesGroupText').value.trim();
+        const after_sales_group_subtitle = document.getElementById('afterSalesGroupSubtitle').value.trim();
+
+        try {
+            const { response, data } = await postJson('/admin/settings/after-sales', {
                 after_sales_group_url,
                 after_sales_group_text,
                 after_sales_group_subtitle
             });
 
             if (response.ok && data.success) {
-                showToast(data.message || 'Webhook 配置已保存', 'success');
+                showToast(data.message || '售后配置已保存', 'success');
             } else {
                 showToast(data.error || '保存失败', 'error');
             }

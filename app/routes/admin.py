@@ -1368,6 +1368,10 @@ class WebhookSettingsRequest(BaseModel):
     webhook_url: str = Field("", description="Webhook URL")
     low_stock_threshold: int = Field(10, description="库存阈值")
     api_key: str = Field("", description="API Key")
+
+
+class AfterSalesSettingsRequest(BaseModel):
+    """售后设置请求"""
     after_sales_group_url: str = Field("", description="售后群链接")
     after_sales_group_text: str = Field("售后群入口", description="售后群按钮文案")
     after_sales_group_subtitle: str = Field(
@@ -1514,12 +1518,6 @@ async def update_webhook_settings(
             "webhook_url": webhook_data.webhook_url.strip(),
             "low_stock_threshold": str(webhook_data.low_stock_threshold),
             "api_key": webhook_data.api_key.strip(),
-            "after_sales_group_url": webhook_data.after_sales_group_url.strip(),
-            "after_sales_group_text": webhook_data.after_sales_group_text.strip() or "售后群入口",
-            "after_sales_group_subtitle": (
-                webhook_data.after_sales_group_subtitle.strip()
-                or "兑换后遇到问题，可直接进群联系售后处理"
-            ),
         }
 
         success = await settings_service.update_settings(db, settings)
@@ -1534,6 +1532,49 @@ async def update_webhook_settings(
 
     except Exception as e:
         logger.error(f"更新配置失败: {e}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": f"更新失败: {str(e)}"}
+        )
+
+
+@router.post("/settings/after-sales")
+async def update_after_sales_settings(
+    after_sales_data: AfterSalesSettingsRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    """更新售后设置"""
+    try:
+        from app.services.settings import settings_service
+
+        logger.info(
+            "管理员更新售后配置: url=%s, text=%s",
+            after_sales_data.after_sales_group_url,
+            after_sales_data.after_sales_group_text,
+        )
+
+        settings = {
+            "after_sales_group_url": after_sales_data.after_sales_group_url.strip(),
+            "after_sales_group_text": after_sales_data.after_sales_group_text.strip() or "售后群入口",
+            "after_sales_group_subtitle": (
+                after_sales_data.after_sales_group_subtitle.strip()
+                or "兑换后遇到问题，可直接进群联系售后处理"
+            ),
+        }
+
+        success = await settings_service.update_settings(db, settings)
+
+        if success:
+            return JSONResponse(content={"success": True, "message": "售后配置已保存"})
+
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "error": "保存失败"}
+        )
+
+    except Exception as e:
+        logger.error(f"更新售后配置失败: {e}")
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"success": False, "error": f"更新失败: {str(e)}"}
