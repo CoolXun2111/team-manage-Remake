@@ -1,4 +1,4 @@
-"""
+﻿"""
 管理员路由
 处理管理员面板的所有页面和操作
 """
@@ -954,9 +954,11 @@ async def export_codes(
         worksheet.set_column('E:E', 30)  # 使用者邮箱
         worksheet.set_column('F:F', 18)  # 使用时间
         worksheet.set_column('G:G', 12)  # 质保时长
+        worksheet.set_column('H:H', 18)  # 质保起算
+        worksheet.set_column('I:I', 18)  # 质保到期
 
         # 写入表头
-        headers = ['兑换码', '状态', '创建时间', '过期时间', '使用者邮箱', '使用时间', '质保时长(天)']
+        headers = ['兑换码', '状态', '创建时间', '过期时间', '使用者邮箱', '使用时间', '质保时长(天)', '质保起算时间', '质保到期时间']
         for col, header in enumerate(headers):
             worksheet.write(0, col, header, header_format)
 
@@ -976,6 +978,8 @@ async def export_codes(
             worksheet.write(row, 4, code.get('used_by_email', '-'), cell_format)
             worksheet.write(row, 5, code.get('used_at', '-'), cell_format)
             worksheet.write(row, 6, code.get('warranty_days', '-') if code.get('has_warranty') else '-', cell_format)
+            worksheet.write(row, 7, code.get('warranty_started_at', '首次使用后开始') if code.get('has_warranty') else '-', cell_format)
+            worksheet.write(row, 8, code.get('warranty_expires_at', '首次使用后开始') if code.get('has_warranty') else '-', cell_format)
 
         # 关闭workbook
         workbook.close()
@@ -1306,7 +1310,10 @@ async def settings_page(
                 "log_level": log_level,
                 "webhook_url": await settings_service.get_setting(db, "webhook_url", ""),
                 "low_stock_threshold": await settings_service.get_setting(db, "low_stock_threshold", "10"),
-                "api_key": await settings_service.get_setting(db, "api_key", "")
+                "api_key": await settings_service.get_setting(db, "api_key", ""),
+                "default_team_seat_limit": await settings_service.get_setting(db, "default_team_seat_limit", "6"),
+                "auto_reinvite_enabled": await settings_service.get_setting(db, "auto_reinvite_enabled", "false"),
+                "auto_reinvite_interval_seconds": await settings_service.get_setting(db, "auto_reinvite_interval_seconds", "300")
             }
         )
 
@@ -1334,6 +1341,9 @@ class WebhookSettingsRequest(BaseModel):
     webhook_url: str = Field("", description="Webhook URL")
     low_stock_threshold: int = Field(10, description="库存阈值")
     api_key: str = Field("", description="API Key")
+    default_team_seat_limit: int = Field(6, description="默认席位上限")
+    auto_reinvite_enabled: bool = Field(False, description="是否启用自动补邀")
+    auto_reinvite_interval_seconds: int = Field(300, description="自动补邀巡检间隔")
 
 
 @router.post("/settings/proxy")
@@ -1452,10 +1462,25 @@ async def update_webhook_settings(
 
         logger.info(f"管理员更新 Webhook/API 配置: url={webhook_data.webhook_url}, threshold={webhook_data.low_stock_threshold}")
 
+        if webhook_data.default_team_seat_limit < 1 or webhook_data.default_team_seat_limit > 100:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "默认席位上限必须在 1-100 之间"}
+            )
+
+        if webhook_data.auto_reinvite_interval_seconds < 60:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "自动补邀巡检间隔不能小于 60 秒"}
+            )
+
         settings = {
             "webhook_url": webhook_data.webhook_url.strip(),
             "low_stock_threshold": str(webhook_data.low_stock_threshold),
-            "api_key": webhook_data.api_key.strip()
+            "api_key": webhook_data.api_key.strip(),
+            "default_team_seat_limit": str(webhook_data.default_team_seat_limit),
+            "auto_reinvite_enabled": str(webhook_data.auto_reinvite_enabled).lower(),
+            "auto_reinvite_interval_seconds": str(webhook_data.auto_reinvite_interval_seconds)
         }
 
         success = await settings_service.update_settings(db, settings)

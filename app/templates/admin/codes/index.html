@@ -108,6 +108,8 @@
                     <th>使用时间</th>
                     <th>质保</th>
                     <th>质保时长</th>
+                    <th>质保起算</th>
+                    <th>质保到期</th>
                     <th style="text-align: right;">操作</th>
                 </tr>
             </thead>
@@ -149,6 +151,20 @@
                     <td>
                         {% if code.has_warranty %}
                         <span style="font-size: 0.875rem;">{{ code.warranty_days }} 天</span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if code.has_warranty %}
+                        <span style="font-size: 0.875rem;">{{ code.warranty_started_at if code.warranty_started_at else '首次使用后开始' }}</span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if code.has_warranty %}
+                        <span style="font-size: 0.875rem;">{{ code.warranty_expires_at if code.warranty_expires_at else '首次使用后开始' }}</span>
                         {% else %}
                         -
                         {% endif %}

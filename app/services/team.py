@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 from app.models import Team, TeamAccount, RedemptionCode
 from app.services.chatgpt import ChatGPTService
 from app.services.encryption import encryption_service
+from app.services.settings import settings_service
 from app.utils.token_parser import TokenParser
 from app.utils.jwt_parser import JWTParser
 from app.utils.time_utils import get_now
@@ -29,6 +30,15 @@ class TeamService:
         self.chatgpt_service = chatgpt_service
         self.token_parser = TokenParser()
         self.jwt_parser = JWTParser()
+
+    async def _get_default_max_members(self, db_session: AsyncSession) -> int:
+        """读取系统默认席位上限。"""
+        default_limit = await settings_service.get_int_setting(
+            db_session,
+            "default_team_seat_limit",
+            6
+        )
+        return max(1, min(default_limit, 100))
 
     async def _handle_api_error(self, result: Dict[str, Any], team: Team, db_session: AsyncSession) -> bool:
         """
@@ -91,6 +101,11 @@ class TeamService:
             team.status = "banned"
             if not db_session.in_transaction():
                 await db_session.commit()
+            try:
+                from app.services.auto_reinvite import auto_reinvite_service
+                asyncio.create_task(auto_reinvite_service.process_once())
+            except Exception as exc:
+                logger.warning(f"触发自动补邀巡检失败: {exc}")
             return True
 
         # 2. 判定是否为“席位已满”错误
@@ -462,8 +477,8 @@ class TeamService:
                     beta_settings = settings_result["data"].get("beta_settings", {})
                     device_code_auth_enabled = beta_settings.get("codex_device_code_auth", False)
 
-                # 确定状态和最大成员数 (默认 6)
-                max_members = 6
+                # 确定状态和最大成员数
+                max_members = await self._get_default_max_members(db_session)
                 status = "active"
                 if current_members >= max_members:
                     status = "full"

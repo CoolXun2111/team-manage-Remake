@@ -7,7 +7,6 @@ import asyncio
 import traceback
 from collections import defaultdict
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
 from sqlalchemy import select, update, delete, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import AsyncSessionLocal
@@ -295,13 +294,16 @@ class RedeemFlowService:
                                 raise Exception("Team账号受限: 官方拦截下发(响应空列表)，请检查账单/风控状态")
 
                             # 成功逻辑
+                            redeemed_at = get_now()
                             rc.status = "used"
                             rc.used_by_email = email
                             rc.used_team_id = team_id_final
-                            rc.used_at = get_now()
+                            rc.used_at = redeemed_at
                             if rc.has_warranty:
-                                days = rc.warranty_days or 30
-                                rc.warranty_expires_at = get_now() + timedelta(days=days)
+                                self.warranty_service.ensure_warranty_window(
+                                    rc,
+                                    fallback_start=redeemed_at
+                                )
 
                             record = RedemptionRecord(
                                 email=email,

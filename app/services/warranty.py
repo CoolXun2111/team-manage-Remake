@@ -28,6 +28,38 @@ class WarrantyService:
         from app.services.team import TeamService
         self.team_service = TeamService()
 
+    def _resolve_warranty_start(
+        self,
+        redemption_code: RedemptionCode,
+        fallback_start: Optional[datetime] = None
+    ) -> Optional[datetime]:
+        """返回质保起算时间，优先使用首次成功使用时间。"""
+        return (
+            redemption_code.warranty_started_at
+            or redemption_code.used_at
+            or fallback_start
+        )
+
+    def ensure_warranty_window(
+        self,
+        redemption_code: RedemptionCode,
+        fallback_start: Optional[datetime] = None
+    ) -> tuple[Optional[datetime], Optional[datetime]]:
+        """确保质保码拥有稳定的起算和到期时间。"""
+        if not redemption_code.has_warranty:
+            return None, None
+
+        start_time = self._resolve_warranty_start(redemption_code, fallback_start)
+        if start_time and redemption_code.warranty_started_at is None:
+            redemption_code.warranty_started_at = start_time
+
+        expiry_date = redemption_code.warranty_expires_at
+        if start_time and expiry_date is None:
+            expiry_date = start_time + timedelta(days=redemption_code.warranty_days or 30)
+            redemption_code.warranty_expires_at = expiry_date
+
+        return start_time, expiry_date
+
     async def check_warranty_status(
         self,
         db_session: AsyncSession,
@@ -105,25 +137,29 @@ class WarrantyService:
                         }
                     
                     # 只有码没有记录的情况
+                    _, warranty_expiry = self.ensure_warranty_window(redemption_code_obj)
+                    warranty_valid = True
+                    if redemption_code_obj.has_warranty and warranty_expiry:
+                        warranty_valid = warranty_expiry > get_now()
                     return {
                         "success": True,
                         "has_warranty": redemption_code_obj.has_warranty,
-                        "warranty_valid": True if not redemption_code_obj.warranty_expires_at or redemption_code_obj.warranty_expires_at > get_now() else False,
-                        "warranty_expires_at": redemption_code_obj.warranty_expires_at.isoformat() if redemption_code_obj.warranty_expires_at else None,
+                        "warranty_valid": warranty_valid,
+                        "warranty_expires_at": warranty_expiry.isoformat() if warranty_expiry else None,
                         "banned_teams": [],
                         "can_reuse": False,
                         "original_code": redemption_code_obj.code,
                         "records": [{
                             "code": redemption_code_obj.code,
                             "has_warranty": redemption_code_obj.has_warranty,
-                            "warranty_valid": True if not redemption_code_obj.warranty_expires_at or redemption_code_obj.warranty_expires_at > get_now() else False,
+                            "warranty_valid": warranty_valid,
                             "status": redemption_code_obj.status,
                             "used_at": None,
                             "team_id": None,
                             "team_name": None,
                             "team_status": None,
                             "team_expires_at": None,
-                            "warranty_expires_at": redemption_code_obj.warranty_expires_at.isoformat() if redemption_code_obj.warranty_expires_at else None
+                            "warranty_expires_at": warranty_expiry.isoformat() if warranty_expiry else None
                         }],
                         "message": "兑换码尚未被使用"
                     }
@@ -189,15 +225,12 @@ class WarrantyService:
                         continue 
 
                 # 动态计算/提取质保信息
-                expiry_date = code_obj.warranty_expires_at
+                _, expiry_date = self.ensure_warranty_window(
+                    code_obj,
+                    fallback_start=record.redeemed_at
+                )
                 
                 # 如果是质保码且已使用，但到期时间为空，尝试动态计算
-                if code_obj.has_warranty and not expiry_date:
-                    start_time = code_obj.used_at or record.redeemed_at # 优先取首次使用时间
-                    if start_time:
-                        days = code_obj.warranty_days or 30
-                        expiry_date = start_time + timedelta(days=days)
-
                 is_valid = True
                 if expiry_date and expiry_date < get_now():
                     is_valid = False
@@ -313,8 +346,9 @@ class WarrantyService:
                 }
 
             # 3. 检查质保期是否有效
-            if redemption_code.warranty_expires_at:
-                if redemption_code.warranty_expires_at < get_now():
+            _, warranty_expiry = self.ensure_warranty_window(redemption_code)
+            if warranty_expiry:
+                if warranty_expiry < get_now():
                     return {
                         "success": True,
                         "can_reuse": False,

@@ -7,7 +7,6 @@
     <h2>系统设置</h2>
 </div>
 
-<!-- 代理配置 -->
 <div class="content-section">
     <div class="section-header">
         <h3>代理配置</h3>
@@ -19,22 +18,20 @@
                 <input type="checkbox" id="proxyEnabled" name="enabled" {% if proxy_enabled %}checked{% endif %}>
                 <span>启用代理</span>
             </label>
-            <p class="form-help">启用后,所有ChatGPT API请求将通过代理服务器</p>
+            <p class="form-help">开启后，系统内所有 ChatGPT API 请求都会走代理。</p>
         </div>
 
         <div class="form-group">
             <label for="proxyUrl">代理地址</label>
             <input type="text" id="proxyUrl" name="proxy" value="{{ proxy or '' }}"
-                placeholder="http://127.0.0.1:7890, socks5://127.0.0.1:1080 或 socks5h://127.0.0.1:1080"
-                class="form-control">
-            <p class="form-help">支持HTTP、SOCKS5和SOCKS5H (远程DNS解析) 代理</p>
+                placeholder="http://127.0.0.1:7890 或 socks5://127.0.0.1:1080" class="form-control">
+            <p class="form-help">支持 `http://`、`https://`、`socks5://` 和 `socks5h://`。</p>
         </div>
 
         <button type="submit" class="btn btn-primary">保存代理配置</button>
     </form>
 </div>
 
-<!-- 密码修改 -->
 <div class="content-section">
     <div class="section-header">
         <h3>修改密码</h3>
@@ -50,7 +47,7 @@
         <div class="form-group">
             <label for="newPassword">新密码</label>
             <input type="password" id="newPassword" name="new_password" required minlength="6" class="form-control"
-                placeholder="请输入新密码(至少6位)">
+                placeholder="请输入新密码，至少 6 位">
         </div>
 
         <div class="form-group">
@@ -60,11 +57,10 @@
         </div>
 
         <button type="submit" class="btn btn-primary">修改密码</button>
-        <p class="form-help">修改密码后需要重新登录</p>
+        <p class="form-help">修改完成后会自动跳转回登录页。</p>
     </form>
 </div>
 
-<!-- 日志级别 -->
 <div class="content-section">
     <div class="section-header">
         <h3>日志级别</h3>
@@ -74,23 +70,22 @@
         <div class="form-group">
             <label for="logLevel">日志级别</label>
             <select id="logLevel" name="level" class="form-control">
-                <option value="DEBUG" {% if log_level=='DEBUG' %}selected{% endif %}>DEBUG - 调试信息</option>
-                <option value="INFO" {% if log_level=='INFO' %}selected{% endif %}>INFO - 一般信息</option>
-                <option value="WARNING" {% if log_level=='WARNING' %}selected{% endif %}>WARNING - 警告信息</option>
-                <option value="ERROR" {% if log_level=='ERROR' %}selected{% endif %}>ERROR - 错误信息</option>
-                <option value="CRITICAL" {% if log_level=='CRITICAL' %}selected{% endif %}>CRITICAL - 严重错误</option>
+                <option value="DEBUG" {% if log_level == 'DEBUG' %}selected{% endif %}>DEBUG</option>
+                <option value="INFO" {% if log_level == 'INFO' %}selected{% endif %}>INFO</option>
+                <option value="WARNING" {% if log_level == 'WARNING' %}selected{% endif %}>WARNING</option>
+                <option value="ERROR" {% if log_level == 'ERROR' %}selected{% endif %}>ERROR</option>
+                <option value="CRITICAL" {% if log_level == 'CRITICAL' %}selected{% endif %}>CRITICAL</option>
             </select>
-            <p class="form-help">调整系统日志的详细程度,DEBUG级别会记录最详细的信息</p>
+            <p class="form-help">推荐默认使用 `INFO`，排查异常时再切到 `DEBUG`。</p>
         </div>
 
         <button type="submit" class="btn btn-primary">保存日志级别</button>
     </form>
 </div>
 
-<!-- Webhook 配置 -->
 <div class="content-section">
     <div class="section-header">
-        <h3>库存预警 Webhook</h3>
+        <h3>库存、席位与自动补邀</h3>
     </div>
 
     <form id="webhookForm" class="settings-form">
@@ -98,24 +93,54 @@
             <label for="webhookUrl">Webhook URL</label>
             <input type="text" id="webhookUrl" name="webhook_url" value="{{ webhook_url or '' }}"
                 placeholder="https://your-api.com/webhook" class="form-control">
-            <p class="form-help">当系统总剩余车位低于阈值时,系统将向此URL发送POST请求</p>
+            <p class="form-help">当系统剩余总席位低于阈值时，会向这里发送补货通知。</p>
         </div>
 
         <div class="form-group">
-            <label for="lowStockThreshold">车位预警阈值</label>
+            <label for="lowStockThreshold">库存预警阈值</label>
             <input type="number" id="lowStockThreshold" name="low_stock_threshold"
                 value="{{ low_stock_threshold or '10' }}" min="0" class="form-control">
-            <p class="form-help">全系统所有活跃 Team 的总剩余车位低于或等于此数值时触发补货通知</p>
+            <p class="form-help">剩余总席位小于或等于这个值时触发 Webhook。</p>
         </div>
 
         <div class="form-group">
-            <label for="apiKey">API Key (用于补货对接)</label>
+            <label for="apiKey">API Key</label>
             <input type="text" id="apiKey" name="api_key" value="{{ api_key or '' }}"
-                placeholder="用于外部程序调用的密钥 (X-API-Key)" class="form-control">
-            <p class="form-help">设置后,第三方程序可以通过 Header `X-API-Key` 认证管理员接口</p>
+                placeholder="外部系统调用时使用的 X-API-Key" class="form-control">
+            <p class="form-help">用于库存或补货系统对接。</p>
         </div>
 
-        <button type="submit" class="btn btn-primary">保存配置</button>
+        <div class="form-group">
+            <label for="defaultTeamSeatLimit">新 Team 默认席位上限</label>
+            <input type="number" id="defaultTeamSeatLimit" name="default_team_seat_limit"
+                value="{{ default_team_seat_limit or '6' }}" min="1" max="100" class="form-control">
+            <p class="form-help">新导入的 Team 默认使用这个席位上限，单个 Team 仍可在编辑弹窗里单独调整。</p>
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-label">
+                <input type="checkbox" id="autoReinviteEnabled" name="auto_reinvite_enabled"
+                    {% if auto_reinvite_enabled == 'true' %}checked{% endif %}>
+                <span>启用失效母号自动补邀</span>
+            </label>
+            <p class="form-help">仅处理拥有质保兑换码的子号邮箱。母号邮箱，尤其是已封禁母号，会自动跳过。</p>
+        </div>
+
+        <div class="form-group">
+            <label for="autoReinviteInterval">自动补邀巡检间隔（秒）</label>
+            <input type="number" id="autoReinviteInterval" name="auto_reinvite_interval_seconds"
+                value="{{ auto_reinvite_interval_seconds or '300' }}" min="60" class="form-control">
+            <p class="form-help">建议不低于 60 秒。时间越短，补邀越快，但 API 请求也会更频繁。</p>
+        </div>
+
+        <div class="form-group">
+            <label>质保规则</label>
+            <div class="form-control readonly-block">
+                质保时长从兑换码首次成功使用后开始计算，后续补邀或重兑不会重置起算时间。
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">保存设置</button>
     </form>
 </div>
 {% endblock %}
@@ -135,19 +160,22 @@
         color: var(--text-muted);
         margin-top: 0.375rem;
     }
+
+    .readonly-block {
+        background: #f8fafc;
+        color: #334155;
+    }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // 代理配置表单
     document.getElementById('proxyForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const enabled = document.getElementById('proxyEnabled').checked;
         const proxy = document.getElementById('proxyUrl').value.trim();
 
-        // 验证
         if (enabled && !proxy) {
             showToast('请输入代理地址', 'error');
             return;
@@ -163,7 +191,6 @@
             });
 
             const data = await response.json();
-
             if (response.ok && data.success) {
                 showToast('代理配置已保存', 'success');
             } else {
@@ -174,7 +201,6 @@
         }
     });
 
-    // 密码修改表单
     document.getElementById('passwordForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -182,14 +208,13 @@
         const newPassword = document.getElementById('newPassword').value;
         const confirmPassword = document.getElementById('confirmPassword').value;
 
-        // 验证
         if (newPassword.length < 6) {
-            showToast('新密码至少6位', 'error');
+            showToast('新密码至少 6 位', 'error');
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            showToast('两次输入的密码不一致', 'error');
+            showToast('两次输入的新密码不一致', 'error');
             return;
         }
 
@@ -206,9 +231,8 @@
             });
 
             const data = await response.json();
-
             if (response.ok && data.success) {
-                showToast('密码修改成功,即将跳转到登录页', 'success');
+                showToast('密码修改成功，即将跳转登录页', 'success');
                 setTimeout(() => {
                     window.location.href = '/login';
                 }, 2000);
@@ -220,7 +244,6 @@
         }
     });
 
-    // 日志级别表单
     document.getElementById('logLevelForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -236,7 +259,6 @@
             });
 
             const data = await response.json();
-
             if (response.ok && data.success) {
                 showToast('日志级别已保存', 'success');
             } else {
@@ -247,16 +269,28 @@
         }
     });
 
-    // Webhook 配置表单
     document.getElementById('webhookForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const webhook_url = document.getElementById('webhookUrl').value.trim();
-        const low_stock_threshold = parseInt(document.getElementById('lowStockThreshold').value);
+        const low_stock_threshold = parseInt(document.getElementById('lowStockThreshold').value, 10);
         const api_key = document.getElementById('apiKey').value.trim();
+        const default_team_seat_limit = parseInt(document.getElementById('defaultTeamSeatLimit').value, 10);
+        const auto_reinvite_enabled = document.getElementById('autoReinviteEnabled').checked;
+        const auto_reinvite_interval_seconds = parseInt(document.getElementById('autoReinviteInterval').value, 10);
 
         if (isNaN(low_stock_threshold) || low_stock_threshold < 0) {
             showToast('请输入有效的库存阈值', 'error');
+            return;
+        }
+
+        if (isNaN(default_team_seat_limit) || default_team_seat_limit < 1 || default_team_seat_limit > 100) {
+            showToast('默认席位上限必须在 1-100 之间', 'error');
+            return;
+        }
+
+        if (isNaN(auto_reinvite_interval_seconds) || auto_reinvite_interval_seconds < 60) {
+            showToast('自动补邀巡检间隔不能小于 60 秒', 'error');
             return;
         }
 
@@ -266,13 +300,19 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ webhook_url, low_stock_threshold, api_key })
+                body: JSON.stringify({
+                    webhook_url,
+                    low_stock_threshold,
+                    api_key,
+                    default_team_seat_limit,
+                    auto_reinvite_enabled,
+                    auto_reinvite_interval_seconds
+                })
             });
 
             const data = await response.json();
-
             if (response.ok && data.success) {
-                showToast('Webhook 配置已保存', 'success');
+                showToast('设置已保存', 'success');
             } else {
                 showToast(data.error || '保存失败', 'error');
             }

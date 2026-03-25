@@ -6,12 +6,13 @@ import logging
 import secrets
 import string
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import timedelta
 from sqlalchemy import select, update, delete, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models import RedemptionCode, RedemptionRecord, Team
+from app.services.warranty import warranty_service
 from app.utils.time_utils import get_now
 
 logger = logging.getLogger(__name__)
@@ -291,6 +292,17 @@ class RedemptionService:
                         "error": None
                     }
 
+            if redemption_code.has_warranty and redemption_code.status == "used":
+                _, warranty_expiry = warranty_service.ensure_warranty_window(redemption_code)
+                if warranty_expiry and warranty_expiry < get_now():
+                    return {
+                        "success": True,
+                        "valid": False,
+                        "reason": "质保已过期",
+                        "redemption_code": None,
+                        "error": None
+                    }
+
             # 4. 验证通过
             return {
                 "success": True,
@@ -471,6 +483,7 @@ class RedemptionService:
                     "used_at": code.used_at.isoformat() if code.used_at else None,
                     "has_warranty": code.has_warranty,
                     "warranty_days": code.warranty_days,
+                    "warranty_started_at": code.warranty_started_at.isoformat() if code.warranty_started_at else None,
                     "warranty_expires_at": code.warranty_expires_at.isoformat() if code.warranty_expires_at else None
                 })
 
@@ -783,20 +796,46 @@ class RedemptionService:
 
             # 3. 恢复兑换码状态
             code = record.redemption_code
+            await db_session.delete(record)
+            await db_session.flush()
             if code:
                 # 如果是质保兑换，且还有其他记录，状态可能不应该直接回 unused
                 # 但根据逻辑，目前一个码一个记录（除了质保补发可能产生新记录，但那是两个不同的码吧？）
                 # 查了一下模型，RedemptionCode 有 used_by_email 等字段，说明它是单次使用的设计
-                code.status = "unused"
-                code.used_by_email = None
-                code.used_team_id = None
-                code.used_at = None
+                remaining_stmt = (
+                    select(RedemptionRecord)
+                    .where(RedemptionRecord.code == code.code)
+                    .order_by(RedemptionRecord.redeemed_at.asc(), RedemptionRecord.id.asc())
+                )
+                remaining_result = await db_session.execute(remaining_stmt)
+                remaining_records = remaining_result.scalars().all()
+
+                if remaining_records:
+                    latest_record = remaining_records[-1]
+                    first_record = remaining_records[0]
+                    code.status = "used"
+                    code.used_by_email = latest_record.email
+                    code.used_team_id = latest_record.team_id
+                    code.used_at = latest_record.redeemed_at
+                else:
+                    code.status = "unused"
+                    code.used_by_email = None
+                    code.used_team_id = None
+                    code.used_at = None
                 # 特殊处理质保字段
                 if code.has_warranty:
-                    code.warranty_expires_at = None
+                    if remaining_records:
+                        code.warranty_started_at = first_record.redeemed_at
+                        _, warranty_expiry = warranty_service.ensure_warranty_window(
+                            code,
+                            fallback_start=first_record.redeemed_at
+                        )
+                        code.warranty_expires_at = warranty_expiry
+                    else:
+                        code.warranty_started_at = None
+                        code.warranty_expires_at = None
 
             # 4. 删除使用记录
-            await db_session.delete(record)
             await db_session.commit()
 
             logger.info(f"撤回记录成功: {record_id}, 邮箱: {record.email}, 兑换码: {record.code}")

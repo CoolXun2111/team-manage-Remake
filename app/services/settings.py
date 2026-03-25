@@ -45,6 +45,19 @@ class SettingsService:
 
         return default
 
+    async def get_bool_setting(self, session: AsyncSession, key: str, default: bool = False) -> bool:
+        """获取布尔配置项。"""
+        value = await self.get_setting(session, key, "true" if default else "false")
+        return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+    async def get_int_setting(self, session: AsyncSession, key: str, default: int) -> int:
+        """获取整数配置项。"""
+        value = await self.get_setting(session, key, str(default))
+        try:
+            return int(str(value).strip())
+        except (TypeError, ValueError):
+            return default
+
     async def get_all_settings(self, session: AsyncSession) -> Dict[str, str]:
         """
         获取所有配置项
