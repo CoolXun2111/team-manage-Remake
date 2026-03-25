@@ -14,6 +14,7 @@ docker compose up -d
 
 如果服务器上的旧项目已经占用了 `8008`，请先在 `.env` 中设置：
 ```env
+APP_PORT=8008
 HOST_PORT=8009
 CONTAINER_NAME=team-manage-remake-app
 ```
