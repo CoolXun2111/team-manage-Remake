@@ -31,6 +31,30 @@ class AutoStatusRefreshScheduleTests(unittest.TestCase):
 
 
 class AutoStatusRefreshProcessTests(unittest.IsolatedAsyncioTestCase):
+    async def test_get_team_ids_prioritizes_problematic_and_stale_teams(self):
+        class _DummyResult:
+            def __init__(self, rows):
+                self._rows = rows
+
+            def all(self):
+                return self._rows
+
+        class _DummySession:
+            async def execute(self, _stmt):
+                return _DummyResult(
+                    [
+                        (1, "active", datetime(2026, 3, 25, 10, 0, 0)),
+                        (2, "error", datetime(2026, 3, 25, 11, 0, 0)),
+                        (3, "full", None),
+                        (4, "expired", datetime(2026, 3, 24, 8, 0, 0)),
+                        (5, "active", None),
+                        (6, "unknown", None),
+                    ]
+                )
+
+        team_ids = await AutoStatusRefreshService._get_team_ids(_DummySession())
+        self.assertEqual(team_ids, [2, 4, 3, 5, 1, 6])
+
     async def test_process_once_summarizes_results_and_marks_slot(self):
         service = AutoStatusRefreshService()
         marked_slots = []
@@ -65,6 +89,7 @@ class AutoStatusRefreshProcessTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(summary["processed"], 3)
         self.assertEqual(summary["succeeded"], 2)
         self.assertEqual(summary["failed"], 1)
+        self.assertEqual(summary["concurrency"], service.DEFAULT_CONCURRENCY)
         self.assertEqual(marked_slots, ["2026-03-25T03:00:00+08:00"])
 
 

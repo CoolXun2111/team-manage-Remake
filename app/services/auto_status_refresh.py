@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 
 class AutoStatusRefreshService:
     """Background task for periodically refreshing team status."""
+    DEFAULT_CONCURRENCY = 3
+    MAX_CONCURRENCY = 10
 
     def __init__(self) -> None:
         self._task: Optional[asyncio.Task] = None
@@ -98,13 +100,64 @@ class AutoStatusRefreshService:
 
     @staticmethod
     async def _get_team_ids(db_session) -> List[int]:
-        stmt = (
-            select(Team.id)
-            .where(Team.status != "banned")
-            .order_by(Team.id.asc())
-        )
+        status_priority = {
+            "error": 0,
+            "expired": 1,
+            "full": 2,
+            "active": 3,
+        }
+        stmt = select(Team.id, Team.status, Team.last_sync).where(Team.status != "banned")
         result = await db_session.execute(stmt)
-        return list(result.scalars().all())
+        rows = result.all()
+
+        candidates = []
+        for team_id, status, last_sync in rows:
+            normalized_status = str(status or "").strip().lower()
+            candidates.append(
+                (
+                    status_priority.get(normalized_status, 4),
+                    last_sync is not None,
+                    last_sync or datetime.min,
+                    team_id,
+                )
+            )
+
+        candidates.sort()
+        return [team_id for _, _, _, team_id in candidates]
+
+    async def _sync_single_team(self, team_id: int) -> Dict[str, Any]:
+        try:
+            async with AsyncSessionLocal() as db_session:
+                result = await team_service.sync_team_info(team_id, db_session)
+        except Exception as exc:
+            logger.error(f"账号状态自动刷新 Team {team_id} 执行异常: {exc}")
+            return {
+                "team_id": team_id,
+                "success": False,
+                "message": None,
+                "error": str(exc) or "刷新异常",
+            }
+
+        return {
+            "team_id": team_id,
+            "success": result.get("success", False),
+            "message": result.get("message"),
+            "error": result.get("error"),
+        }
+
+    async def _run_team_sync(
+        self,
+        team_ids: List[int],
+        *,
+        concurrency: int,
+    ) -> List[Dict[str, Any]]:
+        semaphore = asyncio.Semaphore(max(1, min(concurrency, self.MAX_CONCURRENCY)))
+
+        async def worker(team_id: int) -> Dict[str, Any]:
+            async with semaphore:
+                return await self._sync_single_team(team_id)
+
+        return await asyncio.gather(*(worker(team_id) for team_id in team_ids))
 
     async def start(self) -> None:
         if self._task and not self._task.done():
@@ -158,26 +211,22 @@ class AutoStatusRefreshService:
             async with AsyncSessionLocal() as db_session:
                 team_ids = await self._get_team_ids(db_session)
 
+            concurrency = self.DEFAULT_CONCURRENCY
+
             summary = {
                 "success": True,
                 "processed": 0,
                 "succeeded": 0,
                 "failed": 0,
+                "concurrency": concurrency,
                 "details": [],
                 "message": "",
             }
 
-            for team_id in team_ids:
-                summary["processed"] += 1
-                async with AsyncSessionLocal() as db_session:
-                    result = await team_service.sync_team_info(team_id, db_session)
+            results = await self._run_team_sync(team_ids, concurrency=concurrency)
 
-                detail = {
-                    "team_id": team_id,
-                    "success": result.get("success", False),
-                    "message": result.get("message"),
-                    "error": result.get("error"),
-                }
+            for detail in results:
+                summary["processed"] += 1
                 summary["details"].append(detail)
 
                 if detail["success"]:
