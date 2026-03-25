@@ -1326,7 +1326,10 @@ async def settings_page(
                 ),
                 "default_team_seat_limit": await settings_service.get_setting(db, "default_team_seat_limit", "6"),
                 "auto_reinvite_enabled": await settings_service.get_setting(db, "auto_reinvite_enabled", "false"),
-                "auto_reinvite_interval_seconds": await settings_service.get_setting(db, "auto_reinvite_interval_seconds", "300"),
+                "auto_reinvite_start_time": await settings_service.get_setting(db, "auto_reinvite_start_time", "00:00"),
+                "auto_reinvite_interval_minutes": await settings_service.get_setting(db, "auto_reinvite_interval_minutes", "5"),
+                "auto_reinvite_batch_size": await settings_service.get_setting(db, "auto_reinvite_batch_size", "20"),
+                "auto_reinvite_concurrency": await settings_service.get_setting(db, "auto_reinvite_concurrency", "1"),
                 "auto_status_refresh_enabled": await settings_service.get_setting(db, "auto_status_refresh_enabled", "false"),
                 "auto_status_refresh_start_time": await settings_service.get_setting(db, "auto_status_refresh_start_time", "03:00"),
                 "auto_status_refresh_interval_hours": await settings_service.get_setting(db, "auto_status_refresh_interval_hours", "24"),
@@ -1388,7 +1391,10 @@ class TeamDefaultSettingsRequest(BaseModel):
 class AutoReinviteSettingsRequest(BaseModel):
     """自动补邀设置请求"""
     auto_reinvite_enabled: bool = Field(False, description="是否启用自动补邀")
-    auto_reinvite_interval_seconds: int = Field(300, description="自动补邀巡检间隔")
+    auto_reinvite_start_time: str = Field("00:00", description="自动补邀开始时间")
+    auto_reinvite_interval_minutes: int = Field(5, description="自动补邀扫描周期")
+    auto_reinvite_batch_size: int = Field(20, description="单轮最多处理账号数")
+    auto_reinvite_concurrency: int = Field(1, description="自动补邀并发数")
 
 
 class TeamRefreshSettingsRequest(BaseModel):
@@ -1634,22 +1640,47 @@ async def update_auto_reinvite_settings(
         from app.services.settings import settings_service
 
         logger.info(
-            "管理员更新自动补邀配置: enabled=%s, interval_seconds=%s",
+            "管理员更新自动补邀配置: enabled=%s, start_time=%s, interval_minutes=%s, batch_size=%s, concurrency=%s",
             reinvite_data.auto_reinvite_enabled,
-            reinvite_data.auto_reinvite_interval_seconds,
+            reinvite_data.auto_reinvite_start_time,
+            reinvite_data.auto_reinvite_interval_minutes,
+            reinvite_data.auto_reinvite_batch_size,
+            reinvite_data.auto_reinvite_concurrency,
         )
 
-        if reinvite_data.auto_reinvite_interval_seconds < 60:
+        if not _is_valid_hhmm(reinvite_data.auto_reinvite_start_time):
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                content={"success": False, "error": "自动补邀巡检间隔不能小于 60 秒"}
+                content={"success": False, "error": "自动补邀开始时间格式错误，请使用 HH:MM"}
+            )
+
+        if reinvite_data.auto_reinvite_interval_minutes < 1 or reinvite_data.auto_reinvite_interval_minutes > 1440:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "自动补邀扫描周期必须在 1-1440 分钟之间"}
+            )
+
+        if reinvite_data.auto_reinvite_batch_size < 1 or reinvite_data.auto_reinvite_batch_size > 500:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "单轮处理账号数必须在 1-500 之间"}
+            )
+
+        if reinvite_data.auto_reinvite_concurrency < 1 or reinvite_data.auto_reinvite_concurrency > 20:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "error": "自动补邀并发数必须在 1-20 之间"}
             )
 
         success = await settings_service.update_settings(
             db,
             {
                 "auto_reinvite_enabled": str(reinvite_data.auto_reinvite_enabled).lower(),
-                "auto_reinvite_interval_seconds": str(reinvite_data.auto_reinvite_interval_seconds),
+                "auto_reinvite_start_time": reinvite_data.auto_reinvite_start_time.strip(),
+                "auto_reinvite_interval_minutes": str(reinvite_data.auto_reinvite_interval_minutes),
+                "auto_reinvite_batch_size": str(reinvite_data.auto_reinvite_batch_size),
+                "auto_reinvite_concurrency": str(reinvite_data.auto_reinvite_concurrency),
+                "auto_reinvite_last_slot": "",
             },
         )
 

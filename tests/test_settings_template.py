@@ -50,6 +50,10 @@ class SettingsTemplateTests(unittest.TestCase):
         self.assertIn('id="autoReinviteForm"', html)
         self.assertIn('class="settings-list settings-rule-list"', html)
         self.assertIn("panel-auto-reinvite", html)
+        self.assertIn('id="autoReinviteStartTime"', html)
+        self.assertIn('id="autoReinviteIntervalMinutes"', html)
+        self.assertIn('id="autoReinviteBatchSize"', html)
+        self.assertIn('id="autoReinviteConcurrency"', html)
 
 
 if __name__ == "__main__":

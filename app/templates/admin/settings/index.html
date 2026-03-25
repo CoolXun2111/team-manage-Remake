@@ -276,11 +276,36 @@
                         <p class="form-help">开启后只会处理符合规则的质保子号，不会把母号邮箱或仍在正常 Team 中的账号重复补邀。</p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="autoReinviteInterval">自动补邀巡检间隔（秒）</label>
-                        <input type="number" id="autoReinviteInterval" name="auto_reinvite_interval_seconds"
-                            value="{{ auto_reinvite_interval_seconds or '300' }}" min="60" class="form-control">
-                        <p class="form-help">建议不低于 60 秒。时间越短，补邀越快，但后台请求也会更频繁。</p>
+                    <div class="settings-form-split">
+                        <div class="form-group">
+                            <label for="autoReinviteStartTime">扫描开始时间</label>
+                            <input type="time" id="autoReinviteStartTime" name="auto_reinvite_start_time"
+                                value="{{ auto_reinvite_start_time or '00:00' }}" class="form-control">
+                            <p class="form-help">首轮从这个时间点开始，之后按扫描周期循环执行。</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="autoReinviteIntervalMinutes">扫描周期（分钟）</label>
+                            <input type="number" id="autoReinviteIntervalMinutes" name="auto_reinvite_interval_minutes"
+                                value="{{ auto_reinvite_interval_minutes or '5' }}" min="1" max="1440" class="form-control">
+                            <p class="form-help">支持 1-1440 分钟，适合按固定节奏补邀。</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-form-split">
+                        <div class="form-group">
+                            <label for="autoReinviteBatchSize">单轮处理账号数</label>
+                            <input type="number" id="autoReinviteBatchSize" name="auto_reinvite_batch_size"
+                                value="{{ auto_reinvite_batch_size or '20' }}" min="1" max="500" class="form-control">
+                            <p class="form-help">限制每轮最多处理多少个账号，避免一次性扫完整库导致请求过大。</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="autoReinviteConcurrency">自动补邀并发数</label>
+                            <input type="number" id="autoReinviteConcurrency" name="auto_reinvite_concurrency"
+                                value="{{ auto_reinvite_concurrency or '1' }}" min="1" max="20" class="form-control">
+                            <p class="form-help">控制同一时间并发处理多少个账号；数值越高，处理越快，但请求压力也更大。</p>
+                        </div>
                     </div>
 
                     <div class="settings-note">
@@ -291,6 +316,7 @@
                             <li>最新记录对应的 Team 必须已封禁；正常、已满或仅异常状态不会触发。</li>
                             <li>如果该邮箱已经在新的正常 Team 中，系统会自动跳过。</li>
                             <li>母号邮箱和来源母号邮箱会自动跳过，不参与补邀。</li>
+                            <li>每个时间槽只执行一次，超出单轮处理上限的账号会顺延到下一轮。</li>
                         </ul>
                     </div>
 
@@ -945,17 +971,38 @@
         e.preventDefault();
 
         const auto_reinvite_enabled = document.getElementById('autoReinviteEnabled').checked;
-        const auto_reinvite_interval_seconds = parseInt(document.getElementById('autoReinviteInterval').value, 10);
+        const auto_reinvite_start_time = document.getElementById('autoReinviteStartTime').value;
+        const auto_reinvite_interval_minutes = parseInt(document.getElementById('autoReinviteIntervalMinutes').value, 10);
+        const auto_reinvite_batch_size = parseInt(document.getElementById('autoReinviteBatchSize').value, 10);
+        const auto_reinvite_concurrency = parseInt(document.getElementById('autoReinviteConcurrency').value, 10);
 
-        if (isNaN(auto_reinvite_interval_seconds) || auto_reinvite_interval_seconds < 60) {
-            showToast('自动补邀巡检间隔不能小于 60 秒', 'error');
+        if (!/^\d{2}:\d{2}$/.test(auto_reinvite_start_time)) {
+            showToast('请输入有效的自动补邀开始时间', 'error');
+            return;
+        }
+
+        if (isNaN(auto_reinvite_interval_minutes) || auto_reinvite_interval_minutes < 1 || auto_reinvite_interval_minutes > 1440) {
+            showToast('扫描周期必须在 1-1440 分钟之间', 'error');
+            return;
+        }
+
+        if (isNaN(auto_reinvite_batch_size) || auto_reinvite_batch_size < 1 || auto_reinvite_batch_size > 500) {
+            showToast('单轮处理账号数必须在 1-500 之间', 'error');
+            return;
+        }
+
+        if (isNaN(auto_reinvite_concurrency) || auto_reinvite_concurrency < 1 || auto_reinvite_concurrency > 20) {
+            showToast('自动补邀并发数必须在 1-20 之间', 'error');
             return;
         }
 
         try {
             const { response, data } = await postJson('/admin/settings/auto-reinvite', {
                 auto_reinvite_enabled,
-                auto_reinvite_interval_seconds
+                auto_reinvite_start_time,
+                auto_reinvite_interval_minutes,
+                auto_reinvite_batch_size,
+                auto_reinvite_concurrency
             });
 
             if (response.ok && data.success) {

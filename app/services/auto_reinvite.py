@@ -1,9 +1,13 @@
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
+import pytz
 
 from sqlalchemy import select
 
+from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models import RedemptionCode, RedemptionRecord, Team
 from app.services.redeem_flow import redeem_flow_service
@@ -16,6 +20,10 @@ logger = logging.getLogger(__name__)
 class AutoReinviteService:
     """失效母号自动补邀服务。"""
     ELIGIBLE_SOURCE_STATUSES = {"banned"}
+    DEFAULT_START_TIME = "00:00"
+    DEFAULT_INTERVAL_MINUTES = 5
+    DEFAULT_BATCH_SIZE = 20
+    DEFAULT_CONCURRENCY = 1
 
     def __init__(self) -> None:
         self._task: Optional[asyncio.Task] = None
@@ -25,6 +33,101 @@ class AutoReinviteService:
     @staticmethod
     def _normalize_email(email: Optional[str]) -> str:
         return (email or "").strip().lower()
+
+    @staticmethod
+    def _parse_schedule_time(value: str) -> Tuple[int, int]:
+        try:
+            hour_str, minute_str = str(value).strip().split(":", 1)
+            hour = int(hour_str)
+            minute = int(minute_str)
+        except (AttributeError, TypeError, ValueError):
+            return 0, 0
+
+        if not (0 <= hour <= 23 and 0 <= minute <= 59):
+            return 0, 0
+
+        return hour, minute
+
+    @classmethod
+    def _get_current_slot(
+        cls,
+        now: datetime,
+        start_time: str,
+        interval_minutes: int,
+    ) -> datetime:
+        hour, minute = cls._parse_schedule_time(start_time)
+        interval_minutes = max(1, min(interval_minutes, 1440))
+
+        first_slot = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if now < first_slot:
+            first_slot -= timedelta(days=1)
+
+        elapsed_seconds = max(0, int((now - first_slot).total_seconds()))
+        interval_seconds = interval_minutes * 60
+        slot_offset = elapsed_seconds // interval_seconds
+        return first_slot + timedelta(seconds=slot_offset * interval_seconds)
+
+    @classmethod
+    async def _load_config(cls, db_session) -> Dict[str, Any]:
+        return {
+            "enabled": await settings_service.get_bool_setting(
+                db_session,
+                "auto_reinvite_enabled",
+                False,
+            ),
+            "start_time": await settings_service.get_setting(
+                db_session,
+                "auto_reinvite_start_time",
+                cls.DEFAULT_START_TIME,
+            ),
+            "interval_minutes": max(
+                1,
+                min(
+                    1440,
+                    await settings_service.get_int_setting(
+                        db_session,
+                        "auto_reinvite_interval_minutes",
+                        cls.DEFAULT_INTERVAL_MINUTES,
+                    ),
+                ),
+            ),
+            "batch_size": max(
+                1,
+                min(
+                    500,
+                    await settings_service.get_int_setting(
+                        db_session,
+                        "auto_reinvite_batch_size",
+                        cls.DEFAULT_BATCH_SIZE,
+                    ),
+                ),
+            ),
+            "concurrency": max(
+                1,
+                min(
+                    20,
+                    await settings_service.get_int_setting(
+                        db_session,
+                        "auto_reinvite_concurrency",
+                        cls.DEFAULT_CONCURRENCY,
+                    ),
+                ),
+            ),
+            "last_slot": await settings_service.get_setting(
+                db_session,
+                "auto_reinvite_last_slot",
+                "",
+            ),
+        }
+
+    @staticmethod
+    async def _mark_last_slot(slot_value: str) -> None:
+        async with AsyncSessionLocal() as db_session:
+            await settings_service.update_setting(
+                db_session,
+                "auto_reinvite_last_slot",
+                slot_value,
+            )
 
     def _classify_candidate(
         self,
@@ -91,56 +194,90 @@ class AutoReinviteService:
 
     async def _run_loop(self) -> None:
         while not self._stop_event.is_set():
-            interval_seconds = 300
             try:
                 async with AsyncSessionLocal() as db_session:
-                    interval_seconds = max(
-                        60,
-                        await settings_service.get_int_setting(
-                            db_session,
-                            "auto_reinvite_interval_seconds",
-                            300,
-                        ),
-                    )
-                    enabled = await settings_service.get_bool_setting(
-                        db_session,
-                        "auto_reinvite_enabled",
-                        False,
-                    )
+                    config = await self._load_config(db_session)
 
-                if enabled:
-                    await self.process_once()
+                if config["enabled"]:
+                    tz = pytz.timezone(settings.timezone)
+                    now = datetime.now(tz)
+                    current_slot = self._get_current_slot(
+                        now,
+                        config["start_time"],
+                        config["interval_minutes"],
+                    )
+                    slot_key = current_slot.isoformat()
+                    if slot_key != config["last_slot"]:
+                        await self.process_once(slot_key)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
                 logger.error(f"自动补邀巡检异常: {exc}")
 
             try:
-                await asyncio.wait_for(self._stop_event.wait(), timeout=interval_seconds)
+                await asyncio.wait_for(self._stop_event.wait(), timeout=30)
             except asyncio.TimeoutError:
                 continue
 
-    async def process_once(self) -> Dict[str, Any]:
+    async def _execute_candidate(self, candidate: Dict[str, Any]) -> Dict[str, Any]:
+        async with AsyncSessionLocal() as db_session:
+            return await self._process_candidate(db_session, candidate)
+
+    async def _run_candidates(
+        self,
+        candidates: List[Dict[str, Any]],
+        concurrency: int,
+    ) -> List[Dict[str, Any]]:
+        semaphore = asyncio.Semaphore(max(1, concurrency))
+
+        async def worker(candidate: Dict[str, Any]) -> Dict[str, Any]:
+            async with semaphore:
+                return await self._execute_candidate(candidate)
+
+        results = await asyncio.gather(
+            *(worker(candidate) for candidate in candidates),
+            return_exceptions=True,
+        )
+
+        normalized_results: List[Dict[str, Any]] = []
+        for candidate, result in zip(candidates, results):
+            if isinstance(result, Exception):
+                normalized_results.append(
+                    {
+                        "status": "failed",
+                        "code": candidate.get("code"),
+                        "email": candidate.get("email"),
+                        "reason": str(result) or "自动补邀执行异常",
+                    }
+                )
+            else:
+                normalized_results.append(result)
+
+        return normalized_results
+
+    async def process_once(self, slot_key: Optional[str] = None) -> Dict[str, Any]:
         """执行一轮自动补邀巡检。"""
         async with self._run_lock:
             async with AsyncSessionLocal() as db_session:
-                enabled = await settings_service.get_bool_setting(
-                    db_session,
-                    "auto_reinvite_enabled",
-                    False,
-                )
-                if not enabled:
+                config = await self._load_config(db_session)
+                if not config["enabled"]:
                     return {
                         "success": True,
                         "processed": 0,
                         "reinvited": 0,
                         "skipped": 0,
                         "failed": 0,
+                        "total_candidates": 0,
+                        "remaining_candidates": 0,
                         "details": [],
                         "message": "自动补邀未启用",
                     }
 
                 candidates = await self._collect_candidates(db_session)
+
+            total_candidates = len(candidates)
+            candidates = candidates[: config["batch_size"]]
+            remaining_candidates = max(0, total_candidates - len(candidates))
 
             summary = {
                 "success": True,
@@ -148,15 +285,18 @@ class AutoReinviteService:
                 "reinvited": 0,
                 "skipped": 0,
                 "failed": 0,
+                "total_candidates": total_candidates,
+                "remaining_candidates": remaining_candidates,
+                "batch_size": config["batch_size"],
+                "concurrency": config["concurrency"],
                 "details": [],
                 "message": "",
             }
 
-            for candidate in candidates:
-                summary["processed"] += 1
-                async with AsyncSessionLocal() as db_session:
-                    result = await self._process_candidate(db_session, candidate)
+            results = await self._run_candidates(candidates, config["concurrency"])
 
+            for result in results:
+                summary["processed"] += 1
                 summary["details"].append(result)
                 status = result.get("status")
                 if status == "reinvited":
@@ -172,8 +312,19 @@ class AutoReinviteService:
                 f"跳过 {summary['skipped']} 条, "
                 f"失败 {summary['failed']} 条"
             )
+            if summary["remaining_candidates"] > 0:
+                summary["message"] += f"，其余 {summary['remaining_candidates']} 条留待下轮处理"
             if summary["processed"] > 0:
                 logger.info(summary["message"])
+            elif slot_key:
+                logger.info(
+                    "自动补邀巡检完成: 当前时间槽无可处理账号 (并发=%s, 单轮上限=%s)",
+                    config["concurrency"],
+                    config["batch_size"],
+                )
+
+            if slot_key:
+                await self._mark_last_slot(slot_key)
             return summary
 
     async def _collect_candidates(self, db_session) -> List[Dict[str, Any]]:
