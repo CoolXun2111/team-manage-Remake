@@ -1,0 +1,167 @@
+# OnePlus Ace 2 (PHK110, SM8475 / waipio) kernel build on GitHub Actions
+#
+# Target phone (verified 2026-10-24 from the version-info screenshot):
+#   build  PHK110_16.0.5.1201(CN01), Android 16, security patch 2026-08-01
+#   kernel 5.10.236-android12-9-o-g74d132f4467a  ->  KMI 5.10-android12-9
+# Source (OnePlusOSS, branch oneplus/sm8475, manifest oneplus_ace2_b.xml):
+#   kernel projects at revision oneplus/sm8475_b_16.0.0_ace_2.
+#   WARNING: the public branch's latest common-kernel sync found on 2026-10-24
+#   was PHK110_16.0.3.501(CN01) (2026-03-19), i.e. behind the phone's 16.0.5.1201.
+#   Kernel sub-version matches (5.10.236), but vendor-module compatibility is
+#   NOT guaranteed. Always test an unmodified "baseline" build first
+#   (build_mode=baseline, fastboot boot it) before trusting a patched build.
+#
+# How to use:
+#   1. Put this file in YOUR OWN repo at .github/workflows/build-ace2-kernel.yml
+#      (it does not have to live in the kernel source repo; it clones everything).
+#   2. In your repo: Actions -> "Build OnePlus Ace 2 kernel" -> Run workflow.
+#   3. Download the artifact "ace2-kernel-<build_mode>" when it finishes.
+#   4. Do NOT flash blindly: back up the stock boot.img first, prefer
+#      `fastboot boot <new boot.img>` for a temporary test, and only flash
+#      after the temporary boot passes (calls, mobile data, Wi-Fi, Bluetooth).
+#
+# KernelSU route (matches the checklist):
+#   Default is NO integrated KernelSU. Finish the Droidspaces kernel, boot it,
+#   then install KernelSU in LKM mode on top of it. This is the current
+#   official direction (KernelSU's build doc is archived and says GKI image
+#   mode support was dropped in v3.0 in favour of LKM).
+#   If you deliberately want the old integrated route, set integrate_ksu=true
+#   and a pinned ksu_tag. Do not also install an LKM on the same boot image.
+
+name: Build OnePlus Ace 2 kernel
+
+permissions:
+  contents: read
+
+"on":
+  workflow_dispatch:
+    inputs:
+      build_mode:
+        description: "baseline = unmodified source only (recommended first run); droidspaces = + kABI patches + GKI defconfig options"
+        required: true
+        type: choice
+        options:
+          - droidspaces
+          - baseline
+        default: droidspaces
+      kabi_patch_variant:
+        description: "SYSVIPC kABI patch slot to try first (only used in droidspaces mode; if it bootloops, rerun with another slot)"
+        required: true
+        type: choice
+        options:
+          - "6_7_8"
+          - "3_4_5"
+          - "1_2_3"
+        default: "6_7_8"
+      integrate_ksu:
+        description: "Old integrated KernelSU route (setup.sh). Leave false for the recommended LKM-after-boot route."
+        required: false
+        type: boolean
+        default: false
+      ksu_tag:
+        description: "KernelSU tag for setup.sh, e.g. v1.0.3. Leave empty for the script's latest stable tag. Only used when integrate_ksu=true."
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  build:
+    name: Build Ace 2 kernel (${{ inputs.build_mode }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    env:
+      MANIFEST_BRANCH: oneplus/sm8475
+      MANIFEST_FILE: oneplus_ace2_b.xml
+      COMMON_DIR: kernel_platform/common
+      DEFCONFIG: kernel_platform/common/arch/arm64/configs/gki_defconfig
+
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v4
+
+      - name: Show runner disk and memory
+        run: |
+          df -h
+          free -h
+          nproc
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git curl wget jq python3 rsync cpio unzip \
+            build-essential bc bison flex \
+            libssl-dev libelf-dev libncurses-dev \
+            lz4 zstd xz-utils
+
+      - name: Install repo tool
+        run: |
+          mkdir -p ~/bin
+          curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o ~/bin/repo
+          chmod +x ~/bin/repo
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Sync OnePlus kernel source
+        run: |
+          set -euxo pipefail
+          mkdir -p kernel
+          cd kernel
+          repo init -u https://github.com/OnePlusOSS/kernel_manifest \
+            -b "$MANIFEST_BRANCH" -m "$MANIFEST_FILE"
+          # -c = current branch only, keeps the download smaller.
+          repo sync -c -j"$(nproc)"
+          echo "=== kernel_platform layout ==="
+          ls kernel_platform/
+          echo "=== common kernel HEAD ==="
+          git -C kernel_platform/common log -1 --oneline || true
+          echo "=== msm-kernel HEAD ==="
+          git -C kernel_platform/msm-kernel log -1 --oneline || true
+          {
+            echo "manifest_branch=$MANIFEST_BRANCH"
+            echo "manifest_file=$MANIFEST_FILE"
+            echo "build_mode=${{ inputs.build_mode }}"
+            echo "kabi_patch_variant=${{ inputs.kabi_patch_variant }}"
+            echo "integrate_ksu=${{ inputs.integrate_ksu }}"
+            echo "ksu_tag=${{ inputs.ksu_tag }}"
+            echo "common_head=$(git -C kernel_platform/common rev-parse HEAD)"
+            echo "msm_kernel_head=$(git -C kernel_platform/msm-kernel rev-parse HEAD)"
+          } > ../BUILD_INFO.txt
+
+      - name: Download Droidspaces kABI patches
+        if: inputs.build_mode == 'droidspaces'
+        run: |
+          set -euxo pipefail
+          mkdir -p patches
+          cd patches
+          BASE="https://raw.githubusercontent.com/ravindu644/Droidspaces-OSS/main/Documentation/resources/kernel-patches/GKI/below-kernel-6.12"
+          curl -fsSL "$BASE/001.GKI-below-6.12-fix_sysvipc_kabi_${{ inputs.kabi_patch_variant }}.patch" \
+            -o 001-sysvipc-kabi.patch
+          curl -fsSL "$BASE/002.5.10_or_lower_use_android_abi_padding_for_posix_mqueue.patch" \
+            -o 002-posix-mqueue.patch
+          ls -l
+          sha256sum *.patch
+
+      - name: Apply Droidspaces kABI patches
+        if: inputs.build_mode == 'droidspaces'
+        run: |
+          set -euxo pipefail
+          cd kernel/$COMMON_DIR
+          # Dry-run first so a bad patch fails here with a clear message,
+          # instead of halfway through a multi-hour build.
+          patch -p1 --dry-run < ../../../patches/001-sysvipc-kabi.patch
+          patch -p1 < ../../../patches/001-sysvipc-kabi.patch
+          patch -p1 --dry-run < ../../../patches/002-posix-mqueue.patch
+          patch -p1 < ../../../patches/002-posix-mqueue.patch
+          echo "kabi_patches_applied=001-sysvipc-kabi_${{ inputs.kabi_patch_variant }},002-posix-mqueue" >> ../../../BUILD_INFO.txt
+
+      - name: Edit gki_defconfig (in place, GKI list only)
+        if: inputs.build_mode == 'droidspaces'
+        run: |
+          set -euxo pipefail
+          python3 - "$DEFCONFIG" <<'PYEOF'
+          import re
+          import sys
+
+          path = sys.argv[1]
+          # Must-have (Droidspaces GKI list) + recommended (same list).
+          # Deliberately NOT included: CONFIG_CFS_BANDWID
